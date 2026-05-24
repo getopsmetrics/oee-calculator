@@ -3,1230 +3,613 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OEE Calculator — Calculadora OEE</title>
+<title>OEE Calculator — OpsMetrics</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Barlow+Condensed:wght@300;400;600;700;900&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0a0c0f;
-    --surface: #111318;
-    --surface2: #181c23;
-    --border: #1f2530;
-    --border2: #2a3040;
-    --text: #e8eaf0;
-    --text-muted: #5a6278;
-    --text-dim: #8890a4;
-    --accent: #00e5a0;
-    --accent-dim: #00b87d;
-    --accent-glow: rgba(0,229,160,0.12);
-    --warn: #f5a623;
-    --danger: #ff4d4d;
-    --good: #00e5a0;
-    --mid: #f5a623;
-    --bad: #ff4d4d;
-    --font-display: 'Barlow Condensed', sans-serif;
-    --font-body: 'Barlow', sans-serif;
-    --font-mono: 'DM Mono', monospace;
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-body);
-    font-size: 15px;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* Grid texture */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(0,229,160,0.02) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,229,160,0.02) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .container {
-    position: relative;
-    z-index: 1;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 24px 80px;
-  }
-
-  /* HEADER */
-  header {
-    padding: 48px 0 40px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 48px;
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 24px;
-    flex-wrap: wrap;
-  }
-
-  .logo-area {}
-
-  .logo-tag {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    color: var(--accent);
-    text-transform: uppercase;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .logo-tag::before {
-    content: '';
-    width: 20px;
-    height: 1px;
-    background: var(--accent);
-  }
-
-  h1 {
-    font-family: var(--font-display);
-    font-size: clamp(42px, 6vw, 72px);
-    font-weight: 900;
-    line-height: 0.9;
-    letter-spacing: -0.01em;
-    text-transform: uppercase;
-  }
-
-  h1 span {
-    color: var(--accent);
-    display: block;
-  }
-
-  .subtitle {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 16px;
-    letter-spacing: 0.1em;
-  }
-
-  .lang-toggle {
-    display: flex;
-    gap: 0;
-    border: 1px solid var(--border2);
-    border-radius: 4px;
-    overflow: hidden;
-    height: fit-content;
-    margin-top: 8px;
-    flex-shrink: 0;
-  }
-
-  .lang-btn {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    padding: 8px 16px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .lang-btn.active {
-    background: var(--accent);
-    color: var(--bg);
-    font-weight: 600;
-  }
-
-  .lang-btn:hover:not(.active) {
-    background: var(--surface2);
-    color: var(--text);
-  }
-
-  /* INDUSTRY SELECTOR */
-  .industry-row {
-    margin-bottom: 40px;
-  }
-
-  .section-label {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-
-  .industry-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .industry-chip {
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    color: var(--text-dim);
-    font-family: var(--font-mono);
-    font-size: 11px;
-    padding: 8px 16px;
-    border-radius: 2px;
-    cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 0.05em;
-  }
-
-  .industry-chip:hover {
-    border-color: var(--accent-dim);
-    color: var(--accent);
-  }
-
-  .industry-chip.active {
-    background: var(--accent-glow);
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-
-  /* MAIN GRID */
-  .main-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-    margin-bottom: 24px;
-  }
-
-  @media (max-width: 700px) {
-    .main-grid { grid-template-columns: 1fr; }
-  }
-
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 28px;
-    border-radius: 2px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--accent), transparent);
-    opacity: 0.4;
-  }
-
-  .card-title {
-    font-family: var(--font-display);
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: 24px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .card-title .icon {
-    width: 6px; height: 6px;
-    background: var(--accent);
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  /* INPUTS */
-  .field {
-    margin-bottom: 20px;
-  }
-
-  .field:last-child { margin-bottom: 0; }
-
-  label {
-    display: block;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    margin-bottom: 8px;
-  }
-
-  .input-wrap {
-    position: relative;
-  }
-
-  input[type="number"] {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    color: var(--text);
-    font-family: var(--font-mono);
-    font-size: 18px;
-    padding: 12px 52px 12px 14px;
-    border-radius: 2px;
-    outline: none;
-    transition: border-color 0.2s;
-    -moz-appearance: textfield;
-  }
-
-  input[type="number"]::-webkit-inner-spin-button,
-  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
-
-  input[type="number"]:focus {
-    border-color: var(--accent);
-    background: rgba(0,229,160,0.04);
-  }
-
-  .unit {
-    position: absolute;
-    right: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--text-muted);
-  }
-
-  .hint {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 5px;
-    font-family: var(--font-mono);
-  }
-
-  /* SLIDER */
-  .slider-field { margin-bottom: 20px; }
-
-  .slider-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 8px;
-  }
-
-  .slider-val {
-    font-family: var(--font-mono);
-    font-size: 20px;
-    color: var(--accent);
-  }
-
-  input[type="range"] {
-    width: 100%;
-    height: 4px;
-    background: var(--border2);
-    border-radius: 2px;
-    outline: none;
-    -webkit-appearance: none;
-    cursor: pointer;
-  }
-
-  input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 16px; height: 16px;
-    background: var(--accent);
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 0 12px rgba(0,229,160,0.5);
-  }
-
-  /* RESULTS */
-  .results-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 32px;
-    border-radius: 2px;
-    margin-bottom: 24px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .oee-display {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 40px;
-    align-items: center;
-    margin-bottom: 40px;
-  }
-
-  @media (max-width: 600px) {
-    .oee-display { grid-template-columns: 1fr; gap: 24px; }
-  }
-
-  .oee-number-wrap {
-    text-align: center;
-  }
-
-  .oee-label {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    margin-bottom: 4px;
-  }
-
-  .oee-value {
-    font-family: var(--font-display);
-    font-size: 96px;
-    font-weight: 900;
-    line-height: 1;
-    transition: color 0.4s;
-  }
-
-  .oee-pct {
-    font-family: var(--font-display);
-    font-size: 36px;
-    font-weight: 300;
-    vertical-align: top;
-    margin-top: 12px;
-    display: inline-block;
-  }
-
-  .oee-status {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.15em;
-    margin-top: 8px;
-    padding: 4px 12px;
-    border-radius: 2px;
-    display: inline-block;
-  }
-
-  /* COMPONENTS BAR */
-  .components {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    flex: 1;
-  }
-
-  .comp-row {
-    display: grid;
-    grid-template-columns: 120px 1fr 50px;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .comp-name {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.12em;
-    color: var(--text-muted);
-    text-transform: uppercase;
-  }
-
-  .bar-track {
-    height: 8px;
-    background: var(--border2);
-    border-radius: 1px;
-    overflow: hidden;
-  }
-
-  .bar-fill {
-    height: 100%;
-    border-radius: 1px;
-    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
-  }
-
-  .comp-pct {
-    font-family: var(--font-mono);
-    font-size: 13px;
-    text-align: right;
-  }
-
-  /* FINANCIALS */
-  .fin-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-    margin-top: 32px;
-    padding-top: 32px;
-    border-top: 1px solid var(--border);
-  }
-
-  .fin-card {
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    padding: 20px;
-    border-radius: 2px;
-  }
-
-  .fin-label {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    margin-bottom: 8px;
-  }
-
-  .fin-value {
-    font-family: var(--font-display);
-    font-size: 28px;
-    font-weight: 700;
-    line-height: 1;
-  }
-
-  .fin-sub {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--text-muted);
-    margin-top: 4px;
-  }
-
-  /* BENCHMARK */
-  .benchmark-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 28px;
-    border-radius: 2px;
-    margin-bottom: 24px;
-  }
-
-  .bench-title {
-    font-family: var(--font-display);
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .bench-title .icon { width: 6px; height: 6px; background: var(--warn); border-radius: 50%; }
-
-  .bench-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 12px;
-  }
-
-  .bench-item {
-    padding: 14px;
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    border-radius: 2px;
-  }
-
-  .bench-item.current-industry {
-    border-color: var(--accent);
-    background: var(--accent-glow);
-  }
-
-  .bench-industry {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.15em;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    margin-bottom: 6px;
-  }
-
-  .bench-range {
-    font-family: var(--font-display);
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--text);
-  }
-
-  .bench-range span { font-size: 12px; color: var(--text-muted); font-weight: 400; }
-
-  /* RECOMMENDATIONS */
-  .recs-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 28px;
-    border-radius: 2px;
-    margin-bottom: 24px;
-  }
-
-  .rec-item {
-    display: grid;
-    grid-template-columns: 4px 1fr;
-    gap: 16px;
-    padding: 16px 0;
-    border-bottom: 1px solid var(--border);
-    align-items: start;
-  }
-
-  .rec-item:last-child { border-bottom: none; padding-bottom: 0; }
-  .rec-item:first-child { padding-top: 0; }
-
-  .rec-bar {
-    width: 4px;
-    height: 100%;
-    min-height: 40px;
-    border-radius: 2px;
-    margin-top: 3px;
-  }
-
-  .rec-title {
-    font-family: var(--font-display);
-    font-size: 16px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    margin-bottom: 4px;
-  }
-
-  .rec-desc {
-    font-size: 13px;
-    color: var(--text-dim);
-    line-height: 1.5;
-  }
-
-  .rec-impact {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--accent);
-    margin-top: 6px;
-    letter-spacing: 0.1em;
-  }
-
-  /* CTA */
-  .cta-card {
-    background: linear-gradient(135deg, rgba(0,229,160,0.08), rgba(0,229,160,0.02));
-    border: 1px solid var(--accent);
-    padding: 32px;
-    border-radius: 2px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-    flex-wrap: wrap;
-  }
-
-  .cta-text h3 {
-    font-family: var(--font-display);
-    font-size: 24px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    margin-bottom: 6px;
-  }
-
-  .cta-text p {
-    font-size: 13px;
-    color: var(--text-dim);
-    max-width: 400px;
-    line-height: 1.5;
-  }
-
-  .cta-btn {
-    background: var(--accent);
-    color: var(--bg);
-    border: none;
-    font-family: var(--font-display);
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    padding: 16px 32px;
-    border-radius: 2px;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  .cta-btn:hover {
-    background: #00ffb3;
-    box-shadow: 0 0 24px rgba(0,229,160,0.4);
-    transform: translateY(-1px);
-  }
-
-  /* Color states */
-  .color-good { color: var(--good); }
-  .color-mid  { color: var(--mid); }
-  .color-bad  { color: var(--bad); }
-  .bg-good    { background: var(--good); }
-  .bg-mid     { background: var(--mid); }
-  .bg-bad     { background: var(--bad); }
-
-  /* Animate in */
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .card, .results-card, .benchmark-card, .recs-card, .cta-card {
-    animation: fadeUp 0.5s ease both;
-  }
-
-  .results-card { animation-delay: 0.1s; }
-  .benchmark-card { animation-delay: 0.15s; }
-  .recs-card { animation-delay: 0.2s; }
-  .cta-card { animation-delay: 0.25s; }
-
-  /* Divider */
-  .divider {
-    height: 1px;
-    background: linear-gradient(90deg, var(--accent), transparent);
-    margin: 40px 0;
-    opacity: 0.3;
-  }
+:root{--bg:#0a0c0f;--surface:#111318;--surface2:#181c23;--border:#1f2530;--border2:#2a3040;--text:#e8eaf0;--text-muted:#5a6278;--text-dim:#8890a4;--accent:#00e5a0;--accent-dim:#00b87d;--accent-glow:rgba(0,229,160,0.12);--warn:#f5a623;--danger:#ff4d4d;--good:#00e5a0;--mid:#f5a623;--bad:#ff4d4d;--fd:"Barlow Condensed",sans-serif;--fb:"Barlow",sans-serif;--fm:"DM Mono",monospace;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:15px;min-height:100vh;overflow-x:hidden;}
+body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,160,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,0.02) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.container{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:0 24px 80px;}
+header{padding:48px 0 40px;border-bottom:1px solid var(--border);margin-bottom:48px;display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap;}
+.logo-tag{font-family:var(--fm);font-size:10px;letter-spacing:.2em;color:var(--accent);text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.logo-tag::before{content:"";width:20px;height:1px;background:var(--accent);}
+h1{font-family:var(--fd);font-size:clamp(42px,6vw,72px);font-weight:900;line-height:.9;letter-spacing:-.01em;text-transform:uppercase;}
+h1 span{color:var(--accent);display:block;}
+.subtitle{font-family:var(--fm);font-size:11px;color:var(--text-muted);margin-top:16px;letter-spacing:.1em;}
+.lang-toggle{display:flex;gap:0;border:1px solid var(--border2);border-radius:4px;overflow:hidden;height:fit-content;margin-top:8px;flex-shrink:0;}
+.lang-btn{background:none;border:none;color:var(--text-muted);font-family:var(--fm);font-size:11px;letter-spacing:.1em;padding:8px 16px;cursor:pointer;transition:all .2s;}
+.lang-btn.active{background:var(--accent);color:var(--bg);font-weight:600;}
+.lang-btn:hover:not(.active){background:var(--surface2);color:var(--text);}
+.industry-row{margin-bottom:32px;}
+.section-label{font-family:var(--fm);font-size:10px;letter-spacing:.2em;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px;}
+.industry-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.industry-chip{background:var(--surface);border:1px solid var(--border2);color:var(--text-dim);font-family:var(--fm);font-size:11px;padding:8px 16px;border-radius:2px;cursor:pointer;transition:all .2s;letter-spacing:.05em;}
+.industry-chip:hover{border-color:var(--accent-dim);color:var(--accent);}
+.industry-chip.active{background:var(--accent-glow);border-color:var(--accent);color:var(--accent);}
+.bench-context{background:var(--surface2);border:1px solid var(--border2);border-left:3px solid var(--accent);padding:12px 16px;border-radius:0 2px 2px 0;font-family:var(--fm);font-size:11px;color:var(--text-dim);line-height:1.6;}
+.bench-context strong{color:var(--accent);}
+.main-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;}
+@media(max-width:700px){.main-grid{grid-template-columns:1fr;}}
+.card{background:var(--surface);border:1px solid var(--border);padding:28px;border-radius:2px;position:relative;overflow:hidden;}
+.card::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),transparent);opacity:.4;}
+.card-title{font-family:var(--fd);font-size:13px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--text-muted);margin-bottom:24px;display:flex;align-items:center;gap:10px;}
+.card-title .icon{width:6px;height:6px;background:var(--accent);border-radius:50%;flex-shrink:0;}
+.field{margin-bottom:20px;}.field:last-child{margin-bottom:0;}
+label{display:block;font-family:var(--fm);font-size:10px;letter-spacing:.15em;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px;}
+.input-wrap{position:relative;}
+input[type="number"]{width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--fm);font-size:18px;padding:12px 52px 12px 14px;border-radius:2px;outline:none;transition:border-color .2s;-moz-appearance:textfield;}
+input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;}
+input[type="number"]:focus{border-color:var(--accent);background:rgba(0,229,160,0.04);}
+.unit{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-family:var(--fm);font-size:11px;color:var(--text-muted);}
+.hint{font-size:11px;color:var(--text-muted);margin-top:5px;font-family:var(--fm);}
+.slider-field{margin-bottom:20px;}
+.slider-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;}
+.slider-val{font-family:var(--fm);font-size:20px;color:var(--accent);}
+input[type="range"]{width:100%;height:4px;background:var(--border2);border-radius:2px;outline:none;-webkit-appearance:none;cursor:pointer;}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--accent);border-radius:50%;cursor:pointer;box-shadow:0 0 12px rgba(0,229,160,.5);}
+.results-card{background:var(--surface);border:1px solid var(--border);padding:32px;border-radius:2px;margin-bottom:24px;}
+.oee-display{display:grid;grid-template-columns:auto 1fr;gap:40px;align-items:center;margin-bottom:40px;}
+@media(max-width:600px){.oee-display{grid-template-columns:1fr;gap:24px;}}
+.oee-number-wrap{text-align:center;}
+.oee-label{font-family:var(--fm);font-size:10px;letter-spacing:.2em;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;}
+.oee-value{font-family:var(--fd);font-size:96px;font-weight:900;line-height:1;transition:color .4s;}
+.oee-pct{font-family:var(--fd);font-size:36px;font-weight:300;vertical-align:top;margin-top:12px;display:inline-block;}
+.oee-status{font-family:var(--fm);font-size:11px;letter-spacing:.15em;margin-top:8px;padding:4px 12px;border-radius:2px;display:inline-block;}
+.oee-position{font-family:var(--fm);font-size:10px;color:var(--text-muted);margin-top:8px;letter-spacing:.08em;}
+.components{display:flex;flex-direction:column;gap:14px;flex:1;}
+.comp-row{display:grid;grid-template-columns:120px 1fr 50px;align-items:center;gap:12px;}
+.comp-name{font-family:var(--fm);font-size:10px;letter-spacing:.12em;color:var(--text-muted);text-transform:uppercase;}
+.bar-track{height:8px;background:var(--border2);border-radius:1px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:1px;transition:width .6s cubic-bezier(.4,0,.2,1);}
+.comp-pct{font-family:var(--fm);font-size:13px;text-align:right;}
+.fin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:32px;padding-top:32px;border-top:1px solid var(--border);}
+.fin-card{background:var(--surface2);border:1px solid var(--border2);padding:20px;border-radius:2px;}
+.fin-label{font-family:var(--fm);font-size:9px;letter-spacing:.2em;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px;}
+.fin-value{font-family:var(--fd);font-size:28px;font-weight:700;line-height:1;}
+.fin-sub{font-family:var(--fm);font-size:10px;color:var(--text-muted);margin-top:4px;}
+.benchmark-card{background:var(--surface);border:1px solid var(--border);padding:28px;border-radius:2px;margin-bottom:24px;}
+.bench-title{font-family:var(--fd);font-size:13px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--text-muted);margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+.bench-title .icon{width:6px;height:6px;border-radius:50%;}
+.bench-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;}
+.bench-item{padding:14px;background:var(--surface2);border:1px solid var(--border2);border-radius:2px;}
+.bench-item.current-industry{border-color:var(--accent);background:var(--accent-glow);}
+.bench-industry{font-family:var(--fm);font-size:9px;letter-spacing:.15em;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;}
+.bench-range{font-family:var(--fd);font-size:20px;font-weight:700;}
+.bench-range span{font-size:11px;color:var(--text-muted);font-weight:400;}
+.bench-latam{font-family:var(--fm);font-size:9px;color:var(--accent);margin-top:3px;}
+.recs-card{background:var(--surface);border:1px solid var(--border);padding:28px;border-radius:2px;margin-bottom:24px;}
+.rec-item{display:grid;grid-template-columns:4px 1fr;gap:16px;padding:16px 0;border-bottom:1px solid var(--border);align-items:start;}
+.rec-item:last-child{border-bottom:none;padding-bottom:0;}
+.rec-item:first-child{padding-top:0;}
+.rec-bar{width:4px;height:100%;min-height:40px;border-radius:2px;margin-top:3px;}
+.rec-title{font-family:var(--fd);font-size:16px;font-weight:600;letter-spacing:.05em;margin-bottom:4px;}
+.rec-desc{font-size:13px;color:var(--text-dim);line-height:1.5;}
+.rec-impact{font-family:var(--fm);font-size:10px;color:var(--accent);margin-top:6px;letter-spacing:.1em;}
+.cta-card{background:linear-gradient(135deg,rgba(0,229,160,.08),rgba(0,229,160,.02));border:1px solid var(--accent);padding:32px;border-radius:2px;display:flex;flex-direction:column;align-items:stretch;gap:0;}
+.cta-top{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:28px;}
+.cta-text h3{font-family:var(--fd);font-size:24px;font-weight:700;letter-spacing:.05em;margin-bottom:6px;}
+.cta-text p{font-size:13px;color:var(--text-dim);max-width:400px;line-height:1.5;}
+.cta-bullets{display:flex;flex-direction:column;gap:8px;flex-shrink:0;margin-top:4px;}
+.cta-bullet{display:flex;align-items:center;gap:8px;font-family:var(--fm);font-size:10px;color:var(--accent);letter-spacing:.1em;}
+.cta-bullet span.dot{width:6px;height:6px;background:var(--accent);border-radius:50%;flex-shrink:0;}
+.cta-div{height:1px;background:rgba(0,229,160,.15);margin-bottom:28px;}
+.cta-form-wrap{width:100%;display:flex;justify-content:center;}
+.cta-privacy{text-align:center;margin-top:16px;font-family:var(--fm);font-size:10px;color:var(--text-muted);letter-spacing:.08em;}
+.color-good{color:var(--good);}.color-mid{color:var(--mid);}.color-bad{color:var(--bad);}
+.bg-good{background:var(--good);}.bg-mid{background:var(--mid);}.bg-bad{background:var(--bad);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.card,.results-card,.benchmark-card,.recs-card{animation:fadeUp .5s ease both;}
+.results-card{animation-delay:.1s;}.benchmark-card{animation-delay:.15s;}.recs-card{animation-delay:.2s;}
 </style>
 </head>
 <body>
-
 <div class="container">
-
-  <header>
-    <div class="logo-area">
-      <div class="logo-tag" id="tag-tool">INDUSTRIAL PERFORMANCE TOOL</div>
-      <h1>OEE<span id="h1-sub">Calculator</span></h1>
-      <div class="subtitle" id="sub-label">OVERALL EQUIPMENT EFFECTIVENESS · MANUFACTURING BENCHMARK</div>
-    </div>
-    <div>
-      <div class="lang-toggle">
-        <button class="lang-btn active" onclick="setLang('en')">EN</button>
-        <button class="lang-btn" onclick="setLang('es')">ES</button>
-      </div>
-    </div>
-  </header>
-
-  <!-- INDUSTRY -->
-  <div class="industry-row">
-    <div class="section-label" id="lbl-industry">SELECT INDUSTRY / SELECCIONA INDUSTRIA</div>
-    <div class="industry-grid" id="industry-grid"></div>
+<header>
+  <div class="logo-area">
+    <div class="logo-tag" id="tag-tool">INDUSTRIAL PERFORMANCE TOOL</div>
+    <h1>OEE<span id="h1-sub">Calculator</span></h1>
+    <div class="subtitle" id="sub-label">OVERALL EQUIPMENT EFFECTIVENESS · OPSMETRICS</div>
   </div>
-
-  <!-- INPUTS -->
-  <div class="main-grid">
-
-    <div class="card">
-      <div class="card-title"><span class="icon"></span><span id="lbl-availability">AVAILABILITY</span></div>
-
-      <div class="field">
-        <label id="lbl-planned">PLANNED PRODUCTION TIME</label>
-        <div class="input-wrap">
-          <input type="number" id="planned" value="480" min="1" max="1440" oninput="calc()">
-          <span class="unit" id="unit-min">min</span>
-        </div>
-        <div class="hint" id="hint-planned">e.g. 480 = 8h shift</div>
-      </div>
-
-      <div class="field">
-        <label id="lbl-downtime">UNPLANNED DOWNTIME</label>
-        <div class="input-wrap">
-          <input type="number" id="downtime" value="60" min="0" oninput="calc()">
-          <span class="unit">min</span>
-        </div>
-        <div class="hint" id="hint-downtime">Breakdowns, changeovers, material shortage</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title"><span class="icon"></span><span id="lbl-performance">PERFORMANCE</span></div>
-
-      <div class="field">
-        <label id="lbl-ideal">IDEAL CYCLE TIME</label>
-        <div class="input-wrap">
-          <input type="number" id="idealcycle" value="1.0" min="0.01" step="0.1" oninput="calc()">
-          <span class="unit" id="unit-upun">u/min</span>
-        </div>
-        <div class="hint" id="hint-ideal">Units per minute at full speed</div>
-      </div>
-
-      <div class="field">
-        <label id="lbl-total">TOTAL UNITS PRODUCED</label>
-        <div class="input-wrap">
-          <input type="number" id="total" value="380" min="0" oninput="calc()">
-          <span class="unit" id="unit-u">u</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title"><span class="icon"></span><span id="lbl-quality">QUALITY</span></div>
-
-      <div class="field">
-        <label id="lbl-defects">DEFECTIVE / REWORK UNITS</label>
-        <div class="input-wrap">
-          <input type="number" id="defects" value="12" min="0" oninput="calc()">
-          <span class="unit">u</span>
-        </div>
-      </div>
-
-      <div class="slider-field">
-        <div class="slider-header">
-          <label id="lbl-unitval">UNIT VALUE (USD)</label>
-          <span class="slider-val" id="unitval-display">$50</span>
-        </div>
-        <input type="range" id="unitval" min="5" max="500" value="50" oninput="updateUnitVal(); calc()">
-      </div>
-
-      <div class="slider-field">
-        <div class="slider-header">
-          <label id="lbl-ophours">OPERATING DAYS / YEAR</label>
-          <span class="slider-val" id="days-display">250</span>
-        </div>
-        <input type="range" id="opdays" min="100" max="365" value="250" oninput="updateDays(); calc()">
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title"><span class="icon"></span><span id="lbl-plant">PLANT CONTEXT</span></div>
-
-      <div class="field">
-        <label id="lbl-shifts">SHIFTS / DAY</label>
-        <div class="input-wrap">
-          <input type="number" id="shifts" value="2" min="1" max="3" oninput="calc()">
-          <span class="unit" id="unit-sh">shifts</span>
-        </div>
-      </div>
-
-      <div class="field">
-        <label id="lbl-workers">OPERATORS / SHIFT</label>
-        <div class="input-wrap">
-          <input type="number" id="workers" value="15" min="1" oninput="calc()">
-          <span class="unit" id="unit-op">op</span>
-        </div>
-      </div>
-
-      <div class="field">
-        <label id="lbl-laborrate">AVG LABOR COST (USD/hr)</label>
-        <div class="input-wrap">
-          <input type="number" id="laborrate" value="4.5" min="1" step="0.5" oninput="calc()">
-          <span class="unit">$/h</span>
-        </div>
-        <div class="hint" id="hint-labor">Colombia avg industrial ~USD 3.5–6/hr</div>
-      </div>
-    </div>
-
+  <div class="lang-toggle">
+    <button class="lang-btn active" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('es')">ES</button>
   </div>
+</header>
 
-  <!-- RESULTS -->
-  <div class="results-card">
-
-    <div class="oee-display">
-      <div class="oee-number-wrap">
-        <div class="oee-label" id="lbl-oee-result">OEE SCORE</div>
-        <div class="oee-value" id="oee-val">--<span class="oee-pct">%</span></div>
-        <div class="oee-status" id="oee-status">—</div>
-      </div>
-
-      <div class="components">
-        <div class="comp-row">
-          <div class="comp-name" id="lbl-avail">AVAILABILITY</div>
-          <div class="bar-track"><div class="bar-fill bg-good" id="bar-avail" style="width:0%"></div></div>
-          <div class="comp-pct" id="pct-avail">--%</div>
-        </div>
-        <div class="comp-row">
-          <div class="comp-name" id="lbl-perf">PERFORMANCE</div>
-          <div class="bar-track"><div class="bar-fill bg-mid" id="bar-perf" style="width:0%"></div></div>
-          <div class="comp-pct" id="pct-perf">--%</div>
-        </div>
-        <div class="comp-row">
-          <div class="comp-name" id="lbl-qual">QUALITY</div>
-          <div class="bar-track"><div class="bar-fill bg-good" id="bar-qual" style="width:0%"></div></div>
-          <div class="comp-pct" id="pct-qual">--%</div>
-        </div>
-        <div class="comp-row" style="margin-top:8px; padding-top:12px; border-top:1px solid var(--border)">
-          <div class="comp-name" style="color:var(--accent)" id="lbl-oee-comp">OEE</div>
-          <div class="bar-track"><div class="bar-fill" id="bar-oee" style="width:0%; background:var(--accent)"></div></div>
-          <div class="comp-pct" id="pct-oee" style="color:var(--accent)">--%</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Financials -->
-    <div class="fin-grid">
-      <div class="fin-card">
-        <div class="fin-label" id="lbl-good-units">GOOD UNITS / SHIFT</div>
-        <div class="fin-value" id="fin-goodunits">—</div>
-      </div>
-      <div class="fin-card">
-        <div class="fin-label" id="lbl-rev-shift">REVENUE / SHIFT</div>
-        <div class="fin-value color-good" id="fin-revshift">—</div>
-        <div class="fin-sub" id="sub-rev-shift">at current OEE</div>
-      </div>
-      <div class="fin-card">
-        <div class="fin-label" id="lbl-lost-rev">LOST REVENUE / YEAR</div>
-        <div class="fin-value color-bad" id="fin-lostrev">—</div>
-        <div class="fin-sub" id="sub-lost-rev">vs. benchmark OEE</div>
-      </div>
-      <div class="fin-card">
-        <div class="fin-label" id="lbl-potential">POTENTIAL GAIN / YEAR</div>
-        <div class="fin-value color-good" id="fin-potential">—</div>
-        <div class="fin-sub" id="sub-potential">reaching benchmark</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- BENCHMARK -->
-  <div class="benchmark-card">
-    <div class="bench-title"><span class="icon"></span><span id="lbl-bench-title">INDUSTRY BENCHMARKS — OEE WORLD CLASS</span></div>
-    <div class="bench-grid" id="bench-grid"></div>
-  </div>
-
-  <!-- RECOMMENDATIONS -->
-  <div class="recs-card">
-    <div class="bench-title" style="margin-bottom:20px"><span class="icon" style="background:var(--accent)"></span><span id="lbl-recs-title">PRIORITY RECOMMENDATIONS</span></div>
-    <div id="recs-list"></div>
-  </div>
-
-  <!-- EMAIL CAPTURE -->
-  <div class="cta-card" style="flex-direction: column; align-items: stretch; gap: 0;">
-    <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:24px; flex-wrap:wrap; margin-bottom: 28px;">
-      <div class="cta-text">
-        <h3 id="cta-h3">Want a full operational diagnosis?</h3>
-        <p id="cta-p">This calculator gives you the baseline. A structured diagnosis identifies the root causes and builds the 90-day roadmap to recover your lost revenue.</p>
-      </div>
-      <div style="display:flex; flex-direction:column; gap:8px; flex-shrink:0; margin-top:4px;">
-        <div style="display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:10px; color:var(--accent); letter-spacing:0.1em;">
-          <span style="width:6px;height:6px;background:var(--accent);border-radius:50%;flex-shrink:0"></span>
-          <span id="cta-f1">FREE ACCESS</span>
-        </div>
-        <div style="display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:10px; color:var(--accent); letter-spacing:0.1em;">
-          <span style="width:6px;height:6px;background:var(--accent);border-radius:50%;flex-shrink:0"></span>
-          <span id="cta-f2">NO CREDIT CARD</span>
-        </div>
-        <div style="display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:10px; color:var(--accent); letter-spacing:0.1em;">
-          <span style="width:6px;height:6px;background:var(--accent);border-radius:50%;flex-shrink:0"></span>
-          <span id="cta-f3">INSTANT DELIVERY</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Divider -->
-    <div style="height:1px; background:rgba(0,229,160,0.15); margin-bottom:28px;"></div>
-
-    <!-- Brevo Form wrapper -->
-    <div id="brevo-form-wrap" style="width:100%; display:flex; justify-content:center;">
-      <iframe
-        width="540"
-        height="305"
-        src="https://e25602c4.sibforms.com/v2/serve/MUIFANLMYH8W6MQO3ZHW2NZut4NLNdIzYj6SJD09_fZ-39GDpHcFRvMPSP7YEJABZYqWygjifFN5wBKF7BYX2szMlsbem6hZOahG_o7-RfE80WTVX2_zW_MUx9dLqyaSdgkruQ2ZHrI8RJMOSZYUbS4QtC6qkvnUpbGvDvio6_AhuX71J5fY5SVHy9Zj6EydDg0chSrTxDCDWFGxqg=="
-        frameborder="0"
-        scrolling="auto"
-        allowfullscreen
-        style="display:block; max-width:100%; border-radius:2px; filter: invert(1) hue-rotate(155deg) brightness(0.85);"
-      ></iframe>
-    </div>
-
-    <!-- Privacy note -->
-    <div style="text-align:center; margin-top:16px; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); letter-spacing:0.08em;" id="cta-privacy">
-      No spam. No sharing. Unsubscribe anytime.
-    </div>
-  </div>
-
+<div class="industry-row">
+  <div class="section-label" id="lbl-industry">SELECT INDUSTRY</div>
+  <div class="industry-grid" id="industry-grid"></div>
+  <div class="bench-context" id="bench-context"></div>
 </div>
 
+<div class="main-grid">
+  <div class="card">
+    <div class="card-title"><span class="icon"></span><span id="lbl-availability">AVAILABILITY</span></div>
+    <div class="field"><label id="lbl-planned">PLANNED PRODUCTION TIME</label><div class="input-wrap"><input type="number" id="planned" value="480" min="1" max="1440" oninput="calc()"><span class="unit">min</span></div><div class="hint" id="hint-planned">e.g. 480 = 8h shift</div></div>
+    <div class="field"><label id="lbl-downtime">UNPLANNED DOWNTIME</label><div class="input-wrap"><input type="number" id="downtime" value="60" min="0" oninput="calc()"><span class="unit">min</span></div><div class="hint" id="hint-downtime">Breakdowns, changeovers, material shortage</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="icon"></span><span id="lbl-performance">PERFORMANCE</span></div>
+    <div class="field"><label id="lbl-ideal">IDEAL CYCLE TIME</label><div class="input-wrap"><input type="number" id="idealcycle" value="1.0" min="0.01" step="0.1" oninput="calc()"><span class="unit">u/min</span></div><div class="hint" id="hint-ideal">Units per minute at full speed</div></div>
+    <div class="field"><label id="lbl-total">TOTAL UNITS PRODUCED</label><div class="input-wrap"><input type="number" id="total" value="380" min="0" oninput="calc()"><span class="unit">u</span></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="icon"></span><span id="lbl-quality">QUALITY</span></div>
+    <div class="field"><label id="lbl-defects">DEFECTIVE / REWORK UNITS</label><div class="input-wrap"><input type="number" id="defects" value="12" min="0" oninput="calc()"><span class="unit">u</span></div></div>
+    <div class="slider-field"><div class="slider-header"><label id="lbl-unitval">UNIT VALUE (USD)</label><span class="slider-val" id="unitval-display">$50</span></div><input type="range" id="unitval" min="5" max="500" value="50" oninput="updateUnitVal();calc()"></div>
+    <div class="slider-field"><div class="slider-header"><label id="lbl-ophours">OPERATING DAYS / YEAR</label><span class="slider-val" id="days-display">250</span></div><input type="range" id="opdays" min="100" max="365" value="250" oninput="updateDays();calc()"></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="icon"></span><span id="lbl-plant">PLANT CONTEXT</span></div>
+    <div class="field"><label id="lbl-shifts">SHIFTS / DAY</label><div class="input-wrap"><input type="number" id="shifts" value="2" min="1" max="3" oninput="calc()"><span class="unit" id="unit-sh">shifts</span></div></div>
+    <div class="field"><label id="lbl-workers">OPERATORS / SHIFT</label><div class="input-wrap"><input type="number" id="workers" value="15" min="1" oninput="calc()"><span class="unit" id="unit-op">op</span></div></div>
+    <div class="field"><label id="lbl-laborrate">AVG LABOR COST (USD/hr)</label><div class="input-wrap"><input type="number" id="laborrate" value="4.5" min="1" step="0.5" oninput="calc()"><span class="unit">$/h</span></div><div class="hint" id="hint-labor">Colombia avg ~USD 3.5–6/hr</div></div>
+  </div>
+</div>
+
+<div class="results-card">
+  <div class="oee-display">
+    <div class="oee-number-wrap">
+      <div class="oee-label" id="lbl-oee-result">OEE SCORE</div>
+      <div class="oee-value" id="oee-val">--<span class="oee-pct">%</span></div>
+      <div class="oee-status" id="oee-status">—</div>
+      <div class="oee-position" id="oee-position"></div>
+    </div>
+    <div class="components">
+      <div class="comp-row"><div class="comp-name" id="lbl-avail">AVAILABILITY</div><div class="bar-track"><div class="bar-fill bg-good" id="bar-avail" style="width:0%"></div></div><div class="comp-pct" id="pct-avail">--%</div></div>
+      <div class="comp-row"><div class="comp-name" id="lbl-perf">PERFORMANCE</div><div class="bar-track"><div class="bar-fill bg-mid" id="bar-perf" style="width:0%"></div></div><div class="comp-pct" id="pct-perf">--%</div></div>
+      <div class="comp-row"><div class="comp-name" id="lbl-qual">QUALITY</div><div class="bar-track"><div class="bar-fill bg-good" id="bar-qual" style="width:0%"></div></div><div class="comp-pct" id="pct-qual">--%</div></div>
+      <div class="comp-row" style="margin-top:8px;padding-top:12px;border-top:1px solid var(--border)"><div class="comp-name" style="color:var(--accent)" id="lbl-oee-comp">OEE</div><div class="bar-track"><div class="bar-fill" id="bar-oee" style="width:0%;background:var(--accent)"></div></div><div class="comp-pct" id="pct-oee" style="color:var(--accent)">--%</div></div>
+    </div>
+  </div>
+  <div class="fin-grid">
+    <div class="fin-card"><div class="fin-label" id="lbl-good-units">GOOD UNITS / SHIFT</div><div class="fin-value" id="fin-goodunits">—</div></div>
+    <div class="fin-card"><div class="fin-label" id="lbl-rev-shift">REVENUE / SHIFT</div><div class="fin-value color-good" id="fin-revshift">—</div><div class="fin-sub" id="sub-rev-shift">at current OEE</div></div>
+    <div class="fin-card"><div class="fin-label" id="lbl-lost-rev">LOST REVENUE / YEAR</div><div class="fin-value color-bad" id="fin-lostrev">—</div><div class="fin-sub" id="sub-lost-rev">vs. LatAm benchmark</div></div>
+    <div class="fin-card"><div class="fin-label" id="lbl-potential">POTENTIAL GAIN / YEAR</div><div class="fin-value color-good" id="fin-potential">—</div><div class="fin-sub" id="sub-potential">reaching LatAm world class</div></div>
+  </div>
+</div>
+
+<div class="benchmark-card">
+  <div class="bench-title"><span class="icon" style="background:var(--warn)"></span><span id="lbl-bench-title">INDUSTRY BENCHMARKS — GLOBAL vs LATAM</span></div>
+  <div class="bench-grid" id="bench-grid"></div>
+  <div style="margin-top:14px;font-family:var(--fm);font-size:9px;color:var(--text-muted);letter-spacing:.08em;" id="bench-note">LatAm benchmarks adjusted -5 to -8pp from global references based on regional automation level, maintenance maturity, and operational variability. Financial calculations use LatAm benchmark.</div>
+</div>
+
+<div class="recs-card">
+  <div class="bench-title" style="margin-bottom:20px"><span class="icon" style="background:var(--accent)"></span><span id="lbl-recs-title">PRIORITY RECOMMENDATIONS</span></div>
+  <div id="recs-list"></div>
+</div>
+
+<div class="cta-card">
+  <div class="cta-top">
+    <div class="cta-text"><h3 id="cta-h3">Want a full operational diagnosis?</h3><p id="cta-p">This calculator gives you the baseline. A structured diagnosis identifies root causes and builds the 90-day roadmap to recover your lost revenue.</p></div>
+    <div class="cta-bullets">
+      <div class="cta-bullet"><span class="dot"></span><span id="cta-f1">FREE ACCESS</span></div>
+      <div class="cta-bullet"><span class="dot"></span><span id="cta-f2">NO CREDIT CARD</span></div>
+      <div class="cta-bullet"><span class="dot"></span><span id="cta-f3">INSTANT DELIVERY</span></div>
+    </div>
+  </div>
+  <div class="cta-div"></div>
+  <div class="cta-form-wrap">
+    <iframe width="540" height="305" src="https://e25602c4.sibforms.com/v2/serve/MUIFANLMYH8W6MQO3ZHW2NZut4NLNdIzYj6SJD09_fZ-39GDpHcFRvMPSP7YEJABZYqWygjifFN5wBKF7BYX2szMlsbem6hZOahG_o7-RfE80WTVX2_zW_MUx9dLqyaSdgkruQ2ZHrI8RJMOSZYUbS4QtC6qkvnUpbGvDvio6_AhuX71J5fY5SVHy9Zj6EydDg0chSrTxDCDWFGxqg==" frameborder="0" scrolling="auto" allowfullscreen style="display:block;max-width:100%;border-radius:2px;filter:invert(1) hue-rotate(155deg) brightness(0.85);"></iframe>
+  </div>
+  <div class="cta-privacy" id="cta-privacy">No spam. No sharing. Unsubscribe anytime.</div>
+</div>
+
+</div>
 <script>
-  let lang = 'en';
-  let industry = 'food';
-
-  const industries = {
-    food:    { en: 'Food & Beverage', es: 'Alimentos y Bebidas', bench: [65,75], wc: 85 },
-    plastic: { en: 'Plastics',        es: 'Plásticos',          bench: [60,72], wc: 82 },
-    metal:   { en: 'Metal / Auto',    es: 'Metal / Automotriz', bench: [65,78], wc: 85 },
-    paper:   { en: 'Paper / Print',   es: 'Papel / Impresión',  bench: [60,70], wc: 80 },
-    pharma:  { en: 'Pharma',          es: 'Farmacéutica',       bench: [55,70], wc: 80 },
-    textile: { en: 'Textile',         es: 'Textil',             bench: [55,68], wc: 78 },
-    chem:    { en: 'Chemicals',       es: 'Química',            bench: [60,72], wc: 82 },
-    general: { en: 'General Mfg.',    es: 'Manufactura Gral.',  bench: [60,75], wc: 85 },
-  };
-
-  const T = {
-    en: {
-      tag: 'INDUSTRIAL PERFORMANCE TOOL',
-      h1sub: 'Calculator',
-      sublabel: 'OVERALL EQUIPMENT EFFECTIVENESS · MANUFACTURING BENCHMARK',
-      industry: 'SELECT INDUSTRY',
-      avail: 'AVAILABILITY', perf: 'PERFORMANCE', qual: 'QUALITY', plant: 'PLANT CONTEXT',
-      planned: 'PLANNED PRODUCTION TIME', downtime: 'UNPLANNED DOWNTIME',
-      ideal: 'IDEAL CYCLE TIME', total: 'TOTAL UNITS PRODUCED',
-      defects: 'DEFECTIVE / REWORK UNITS', unitval: 'UNIT VALUE (USD)',
-      ophours: 'OPERATING DAYS / YEAR', shifts: 'SHIFTS / DAY',
-      workers: 'OPERATORS / SHIFT', laborrate: 'AVG LABOR COST (USD/hr)',
-      hint_planned: 'e.g. 480 = 8h shift', hint_downtime: 'Breakdowns, changeovers, material shortage',
-      hint_ideal: 'Units per minute at full speed', hint_labor: 'Colombia avg industrial ~USD 3.5–6/hr',
-      oee_result: 'OEE SCORE', avail_c: 'AVAILABILITY', perf_c: 'PERFORMANCE', qual_c: 'QUALITY', oee_c: 'OEE',
-      good_units: 'GOOD UNITS / SHIFT', rev_shift: 'REVENUE / SHIFT', lost_rev: 'LOST REVENUE / YEAR', potential: 'POTENTIAL GAIN / YEAR',
-      sub_rev: 'at current OEE', sub_lost: 'vs. benchmark OEE', sub_pot: 'reaching benchmark',
-      bench_title: 'INDUSTRY BENCHMARKS — OEE WORLD CLASS', bench_wc: 'World Class',
-      recs_title: 'PRIORITY RECOMMENDATIONS',
-      status: ['CRITICAL — IMMEDIATE ACTION','BELOW BENCHMARK','APPROACHING BENCHMARK','AT BENCHMARK','WORLD CLASS'],
-      unit_min: 'min', unit_upun: 'u/min', unit_u: 'u', unit_sh: 'shifts', unit_op: 'op',
-      cta_h3: 'Want a full operational diagnosis?',
-      cta_p: 'This calculator gives you the baseline. A structured diagnosis identifies root causes and builds the 90-day roadmap to recover your lost revenue.',
-      cta_btn: 'GET DIAGNOSIS →',
-      cta_f1: 'FREE ACCESS', cta_f2: 'NO CREDIT CARD', cta_f3: 'INSTANT DELIVERY',
-      cta_privacy: 'No spam. No sharing. Unsubscribe anytime.',
-      recs: {
-        avail_low: { t: 'Reduce Unplanned Downtime', d: 'Your availability is below 75%. Implement a TPM program — autonomous maintenance + SMED to cut changeover time.', i: '+8–15 OEE points possible' },
-        perf_low:  { t: 'Close the Speed Gap', d: 'Performance below benchmark indicates micro-stops and speed losses. Deploy OEE real-time monitoring and run a line balancing study.', i: '+5–12 OEE points possible' },
-        qual_low:  { t: 'Reduce Defect Rate', d: 'Quality loss above 3% requires a DMAIC project. Map the top 3 defect categories and apply SPC controls.', i: '+3–8 OEE points possible' },
-        avail_ok:  { t: 'Sustain Availability', d: 'Availability is solid. Shift focus to predictive maintenance and operator skill development to prevent regression.', i: 'Maintain current gains' },
-        perf_ok:   { t: 'Optimize Speed Performance', d: 'Performance is near benchmark. Fine-tune cycle times and reduce minor stoppages through time-study analysis.', i: '+2–5 OEE points available' },
-        qual_ok:   { t: 'Target Zero Defects', d: 'Quality rate is strong. Implement poka-yoke mechanisms and process capability studies (Cpk) to push toward zero defects.', i: 'Protect margin gains' },
-      }
+// Shared industry data — Global + LatAm benchmarks + industry-specific recommendations
+const INDUSTRIES = {
+  food: {
+    en: 'Food & Beverage', es: 'Alimentos y Bebidas',
+    bench:   { global: [65,75], latam: [58,68] },
+    wc:      { global: 85,      latam: 78 },
+    adjust:  7,
+    // Industry-specific loss drivers
+    drivers: {
+      avail: { en: 'Allergen/product changeovers, CIP cleaning cycles, packaging line jams', es: 'Cambios de referencia/alérgenos, ciclos CIP, atascos en línea de empaque' },
+      perf:  { en: 'Variable raw material viscosity, seasonal demand spikes, manual line feeding', es: 'Variabilidad de viscosidad de materia prima, picos estacionales, alimentación manual de línea' },
+      qual:  { en: 'Contamination risk, weight/fill deviations, label compliance failures', es: 'Riesgo de contaminación, desviaciones de peso/llenado, incumplimientos de etiquetado' },
     },
-    es: {
-      tag: 'HERRAMIENTA DE DESEMPEÑO INDUSTRIAL',
-      h1sub: 'Calculadora',
-      sublabel: 'EFICIENCIA GLOBAL DEL EQUIPO · BENCHMARK MANUFACTURA',
-      industry: 'SELECCIONA INDUSTRIA',
-      avail: 'DISPONIBILIDAD', perf: 'RENDIMIENTO', qual: 'CALIDAD', plant: 'CONTEXTO PLANTA',
-      planned: 'TIEMPO PLANEADO DE PRODUCCIÓN', downtime: 'PAROS NO PLANEADOS',
-      ideal: 'TIEMPO DE CICLO IDEAL', total: 'UNIDADES PRODUCIDAS TOTALES',
-      defects: 'UNIDADES DEFECTUOSAS / RETRABAJO', unitval: 'VALOR POR UNIDAD (USD)',
-      ophours: 'DÍAS OPERATIVOS / AÑO', shifts: 'TURNOS / DÍA',
-      workers: 'OPERARIOS / TURNO', laborrate: 'COSTO LABORAL PROM. (USD/hr)',
-      hint_planned: 'Ej. 480 = turno de 8h', hint_downtime: 'Averías, cambios de referencia, falta de material',
-      hint_ideal: 'Unidades por minuto a velocidad máxima', hint_labor: 'Promedio industrial Colombia ~USD 3.5–6/hr',
-      oee_result: 'RESULTADO OEE', avail_c: 'DISPONIBILIDAD', perf_c: 'RENDIMIENTO', qual_c: 'CALIDAD', oee_c: 'OEE',
-      good_units: 'UNIADES BUENAS / TURNO', rev_shift: 'INGRESOS / TURNO', lost_rev: 'INGRESOS PERDIDOS / AÑO', potential: 'POTENCIAL DE GANANCIA / AÑO',
-      sub_rev: 'con OEE actual', sub_lost: 'vs. benchmark OEE', sub_pot: 'alcanzando benchmark',
-      bench_title: 'BENCHMARKS POR INDUSTRIA — OEE CLASE MUNDIAL', bench_wc: 'Clase Mundial',
-      recs_title: 'RECOMENDACIONES PRIORITARIAS',
-      status: ['CRÍTICO — ACCIÓN INMEDIATA','BAJO BENCHMARK','ACERCÁNDOSE AL BENCHMARK','EN BENCHMARK','CLASE MUNDIAL'],
-      unit_min: 'min', unit_upun: 'u/min', unit_u: 'u', unit_sh: 'turnos', unit_op: 'op',
-      cta_h3: '¿Quieres un diagnóstico operacional completo?',
-      cta_p: 'Esta calculadora te da la línea base. Un diagnóstico estructurado identifica las causas raíz y construye la hoja de ruta a 90 días para recuperar tus ingresos perdidos.',
-      cta_btn: 'OBTÉN TU DIAGNÓSTICO →',
-      cta_f1: 'ACCESO GRATUITO', cta_f2: 'SIN TARJETA DE CRÉDITO', cta_f3: 'ENTREGA INMEDIATA',
-      cta_privacy: 'Sin spam. Sin reenvíos. Cancela cuando quieras.',
-      recs: {
-        avail_low: { t: 'Reduce Paros No Planeados', d: 'Tu disponibilidad está por debajo del 75%. Implementa un programa TPM — mantenimiento autónomo + SMED para reducir tiempos de cambio.', i: '+8–15 puntos OEE posibles' },
-        perf_low:  { t: 'Cierra la Brecha de Velocidad', d: 'Rendimiento bajo benchmark indica microparos y pérdidas de velocidad. Despliega monitoreo OEE en tiempo real y un estudio de balance de línea.', i: '+5–12 puntos OEE posibles' },
-        qual_low:  { t: 'Reduce la Tasa de Defectos', d: 'Pérdidas de calidad superiores al 3% requieren un proyecto DMAIC. Mapea las 3 categorías principales de defecto y aplica controles SPC.', i: '+3–8 puntos OEE posibles' },
-        avail_ok:  { t: 'Sostén la Disponibilidad', d: 'La disponibilidad es sólida. Enfócate en mantenimiento predictivo y desarrollo de habilidades del operario para evitar regresión.', i: 'Mantén las ganancias actuales' },
-        perf_ok:   { t: 'Optimiza el Rendimiento de Velocidad', d: 'El rendimiento está cerca del benchmark. Ajusta tiempos de ciclo y reduce microparos mediante estudios de tiempo.', i: '+2–5 puntos OEE disponibles' },
-        qual_ok:   { t: 'Apunta a Cero Defectos', d: 'La tasa de calidad es fuerte. Implementa poka-yoke y estudios de capacidad de proceso (Cpk) para empujar hacia cero defectos.', i: 'Protege las ganancias de margen' },
-      }
+    recs: {
+      avail_low: {
+        en: { t:'Optimize Changeover & CIP Cycles', d:'Food lines lose 20–35% availability to changeovers and cleaning. Apply SMED to allergen changeovers and map CIP cycle steps to eliminate non-value-added wait time. In LatAm food plants, changeover discipline is typically the #1 OEE lever.', i:'+8–15 OEE points' },
+        es: { t:'Optimiza Cambios de Referencia y Ciclos CIP', d:'Las líneas de alimentos pierden 20–35% de disponibilidad en cambios y limpieza. Aplica SMED a cambios de alérgenos y mapea los pasos CIP para eliminar esperas sin valor. En plantas de alimentos LatAm, la disciplina de cambio es típicamente la palanca #1 de OEE.', i:'+8–15 puntos OEE' },
+      },
+      perf_low: {
+        en: { t:'Stabilize Raw Material Variability', d:'Performance losses in food often trace to inconsistent raw material properties (viscosity, moisture, particle size). Implement incoming material qualification and adjust line speed parameters dynamically. Add micro-stop detection at the filling/packaging station.', i:'+5–10 OEE points' },
+        es: { t:'Estabiliza la Variabilidad de Materia Prima', d:'Las pérdidas de rendimiento en alimentos frecuentemente se originan en propiedades inconsistentes de materia prima (viscosidad, humedad, granulometría). Implementa calificación de materiales entrantes y ajusta parámetros de velocidad dinámicamente. Agrega detección de microparos en la estación de llenado/empaque.', i:'+5–10 puntos OEE' },
+      },
+      qual_low: {
+        en: { t:'Control Critical Quality Points', d:'In food manufacturing, quality losses concentrate at fill weight, seal integrity, and labeling. Map your top 3 defect categories with a Pareto analysis and install in-line checkweighers or vision systems at the critical control point. A DMAIC project typically recovers 2–4% quality rate in 90 days.', i:'+3–7 OEE points' },
+        es: { t:'Controla los Puntos Críticos de Calidad', d:'En manufactura de alimentos, las pérdidas de calidad se concentran en peso de llenado, integridad de sello y etiquetado. Mapea las 3 categorías principales de defecto con análisis Pareto e instala checkweighers en línea o sistemas de visión en el punto crítico. Un proyecto DMAIC típicamente recupera 2–4% de tasa de calidad en 90 días.', i:'+3–7 puntos OEE' },
+      },
     }
+  },
+  plastic: {
+    en: 'Plastics', es: 'Plásticos',
+    bench:   { global: [60,72], latam: [54,65] },
+    wc:      { global: 82,      latam: 75 },
+    adjust:  7,
+    drivers: {
+      avail: { en: 'Mold changeovers, material purging, machine startup/shutdown cycles', es: 'Cambios de molde, purgas de material, ciclos de arranque/parada de máquina' },
+      perf:  { en: 'Cycle time drift, material viscosity variation, mold wear degradation', es: 'Deriva de tiempo de ciclo, variación de viscosidad, desgaste de molde' },
+      qual:  { en: 'Flash, short shots, sink marks, color contamination', es: 'Rebabas, tiros cortos, marcas de hundimiento, contaminación de color' },
+    },
+    recs: {
+      avail_low: {
+        en: { t:'Reduce Mold Changeover Time', d:'Mold changes are the dominant downtime driver in plastics. Apply SMED — external vs internal setup separation. In LatAm plastics plants, mold changeovers average 45–90 min; world-class is under 20 min. Standardize mold carts and pre-heat protocols.', i:'+8–14 OEE points' },
+        es: { t:'Reduce el Tiempo de Cambio de Molde', d:'Los cambios de molde son el principal driver de paros en plásticos. Aplica SMED — separación de setup externo vs interno. En plantas de plásticos LatAm, los cambios de molde promedian 45–90 min; clase mundial es menos de 20 min. Estandariza carros de molde y protocolos de precalentamiento.', i:'+8–14 puntos OEE' },
+      },
+      perf_low: {
+        en: { t:'Stabilize Cycle Time & Prevent Mold Wear', d:'Cycle time drift in injection molding signals mold wear or process parameter drift. Implement SPC on cycle time at the press level. Create a mold maintenance calendar based on shot count, not calendar time. Each 5% cycle time drift costs 5 OEE performance points.', i:'+4–10 OEE points' },
+        es: { t:'Estabiliza el Tiempo de Ciclo y Previene el Desgaste de Molde', d:'La deriva del tiempo de ciclo en inyección señala desgaste de molde o deriva de parámetros de proceso. Implementa SPC sobre el tiempo de ciclo a nivel de prensa. Crea un calendario de mantenimiento de moldes basado en conteo de disparos, no en tiempo calendario. Cada 5% de deriva cuesta 5 puntos de rendimiento OEE.', i:'+4–10 puntos OEE' },
+      },
+      qual_low: {
+        en: { t:'Eliminate Top 3 Defect Categories', d:'Plastics quality losses (flash, short shots, contamination) have clear process-parameter root causes. Run a Design of Experiments (DOE) on your top defect to find the optimal process window. Implement first-article inspection at every mold change and color changeover.', i:'+3–7 OEE points' },
+        es: { t:'Elimina las 3 Categorías Principales de Defecto', d:'Las pérdidas de calidad en plásticos (rebabas, tiros cortos, contaminación) tienen causas raíz claras en parámetros de proceso. Ejecuta un Diseño de Experimentos (DOE) sobre el defecto principal para encontrar la ventana óptima. Implementa inspección de primera pieza en cada cambio de molde y de color.', i:'+3–7 puntos OEE' },
+      },
+    }
+  },
+  metal: {
+    en: 'Metal / Auto', es: 'Metal / Automotriz',
+    bench:   { global: [65,78], latam: [58,70] },
+    wc:      { global: 85,      latam: 78 },
+    adjust:  8,
+    drivers: {
+      avail: { en: 'Tool wear/breakage, setup time, unplanned equipment failures on critical presses', es: 'Desgaste/rotura de herramienta, tiempo de setup, fallas no planeadas en prensas críticas' },
+      perf:  { en: 'Reduced speed due to tool wear, operator-paced operations, material hardness variation', es: 'Velocidad reducida por desgaste de herramienta, operaciones a ritmo del operario, variación de dureza' },
+      qual:  { en: 'Dimensional deviation, surface finish defects, hardness non-conformance', es: 'Desviación dimensional, defectos de acabado superficial, no conformidad de dureza' },
+    },
+    recs: {
+      avail_low: {
+        en: { t:'Implement Predictive Maintenance on Critical Presses', d:'Metal/auto plants lose 25–40% availability to unplanned failures on 2–3 critical machines that "run the plant." Implement vibration and temperature monitoring on these assets first. In LatAm metal plants, reactive maintenance represents 70–80% of maintenance activity vs 30–40% in world-class plants.', i:'+9–15 OEE points' },
+        es: { t:'Implementa Mantenimiento Predictivo en Prensas Críticas', d:'Las plantas metal/auto pierden 25–40% de disponibilidad en fallas no planeadas de 2–3 máquinas críticas que "mandan la planta". Implementa monitoreo de vibración y temperatura en estos activos primero. En plantas metalmecánicas LatAm, el mantenimiento reactivo representa 70–80% de la actividad vs 30–40% en plantas clase mundial.', i:'+9–15 puntos OEE' },
+      },
+      perf_low: {
+        en: { t:'Control Tool Life & Setup Standards', d:'Performance losses in metal processing typically trace to tool wear beyond optimal life and inconsistent setup standards. Define tool replacement based on part count or measured wear, not operator judgment. Standardize setup sheets with photo-based work instructions at each machine.', i:'+5–11 OEE points' },
+        es: { t:'Controla la Vida de Herramienta y los Estándares de Setup', d:'Las pérdidas de rendimiento en metalmecánica típicamente se originan en desgaste de herramienta más allá de la vida óptima y setups inconsistentes. Define el reemplazo de herramienta basado en conteo de piezas o desgaste medido, no en criterio del operario. Estandariza hojas de setup con instrucciones de trabajo fotográficas en cada máquina.', i:'+5–11 puntos OEE' },
+      },
+      qual_low: {
+        en: { t:'Apply SPC at Dimensional Critical Points', d:'Dimensional non-conformance in metal parts has high scrap cost and customer impact. Implement Statistical Process Control (SPC) at the 2–3 dimensions most correlated with customer complaints. In automotive supply chain, a Cpk below 1.33 at critical dimensions is a supplier risk flag.', i:'+3–8 OEE points' },
+        es: { t:'Aplica SPC en Puntos Dimensionales Críticos', d:'La no conformidad dimensional en piezas metálicas tiene alto costo de scrap e impacto en cliente. Implementa Control Estadístico de Proceso (SPC) en las 2–3 dimensiones más correlacionadas con reclamaciones de cliente. En cadena de suministro automotriz, un Cpk menor a 1.33 en dimensiones críticas es una señal de riesgo de proveedor.', i:'+3–8 puntos OEE' },
+      },
+    }
+  },
+  paper: {
+    en: 'Paper / Print', es: 'Papel / Impresión',
+    bench:   { global: [60,70], latam: [55,64] },
+    wc:      { global: 80,      latam: 74 },
+    adjust:  6,
+    drivers: {
+      avail: { en: 'Web breaks, roll changes, ink/coating system failures', es: 'Roturas de papel, cambios de bobina, fallas en sistemas de tinta/recubrimiento' },
+      perf:  { en: 'Reduced press speed due to substrate variation, color matching time', es: 'Velocidad reducida por variación de sustrato, tiempo de igualación de color' },
+      qual:  { en: 'Color deviation, registration errors, coating weight variation', es: 'Desviación de color, errores de registro, variación de peso de recubrimiento' },
+    },
+    recs: {
+      avail_low: {
+        en: { t:'Reduce Web Breaks & Roll Change Time', d:'Web breaks are the primary unplanned downtime source in paper/print. Analyze break locations and correlate with roll quality, splice quality, and tension settings. Implement roll-change SMED — pre-staged rolls and standardized splice protocols reduce change time by 40–60%.', i:'+7–13 OEE points' },
+        es: { t:'Reduce Roturas de Papel y Tiempo de Cambio de Bobina', d:'Las roturas de papel son la principal fuente de paro no planeado en papel/impresión. Analiza ubicaciones de rotura y correla con calidad de bobina, calidad de empalme y configuraciones de tensión. Implementa SMED de cambio de bobina — bobinas pre-posicionadas y protocolos de empalme estandarizados reducen el tiempo de cambio 40–60%.', i:'+7–13 puntos OEE' },
+      },
+      perf_low: {
+        en: { t:'Stabilize Press Speed & Reduce Makeready', d:'Makeready time (color matching, registration adjustment) is the dominant performance loss in print. Implement closed-loop color control systems and standardize ink formulations. In LatAm print plants, makeready averages 45–90 min per job; target is under 20 min.', i:'+4–9 OEE points' },
+        es: { t:'Estabiliza la Velocidad de Prensa y Reduce el Tiempo de Ajuste', d:'El tiempo de ajuste (igualación de color, ajuste de registro) es la principal pérdida de rendimiento en impresión. Implementa sistemas de control de color de lazo cerrado y estandariza formulaciones de tinta. En plantas de impresión LatAm, el ajuste promedia 45–90 min por trabajo; la meta es menos de 20 min.', i:'+4–9 puntos OEE' },
+      },
+      qual_low: {
+        en: { t:'Implement In-Line Color & Registration Control', d:'Color deviation and registration errors account for 60–70% of quality losses in print. Install in-line spectrophotometers or camera inspection systems. Establish color tolerance standards aligned with customer specs and train operators to respond to out-of-tolerance alerts before they generate defective output.', i:'+3–6 OEE points' },
+        es: { t:'Implementa Control de Color y Registro en Línea', d:'La desviación de color y los errores de registro representan 60–70% de las pérdidas de calidad en impresión. Instala espectrofotómetros en línea o sistemas de inspección por cámara. Establece estándares de tolerancia de color alineados con especificaciones del cliente y entrena operarios para responder a alertas fuera de tolerancia antes de generar producto defectuoso.', i:'+3–6 puntos OEE' },
+      },
+    }
+  },
+  pharma: {
+    en: 'Pharma', es: 'Farmacéutica',
+    bench:   { global: [55,70], latam: [50,64] },
+    wc:      { global: 80,      latam: 74 },
+    adjust:  6,
+    drivers: {
+      avail: { en: 'Validated cleaning/changeover procedures, batch documentation time, equipment qualification', es: 'Procedimientos validados de limpieza/cambio, tiempo de documentación de lote, calificación de equipos' },
+      perf:  { en: 'Conservative speed settings for regulatory compliance, manual in-process controls', es: 'Velocidades conservadoras por cumplimiento regulatorio, controles en proceso manuales' },
+      qual:  { en: 'Blend uniformity, fill weight variation, packaging line rejects, documentation errors', es: 'Uniformidad de mezcla, variación de peso de llenado, rechazos en línea de empaque, errores de documentación' },
+    },
+    recs: {
+      avail_low: {
+        en: { t:'Optimize Validated Changeover Procedures', d:'Pharma changeovers are constrained by validation requirements — but the sequence and preparation can be optimized without changing the validated procedure. Map all changeover steps, identify which can be done externally (before line stops), and pre-stage all materials and documents. In LatAm pharma, 30–40% of changeover time is typically external work done after the line stops.', i:'+6–12 OEE points' },
+        es: { t:'Optimiza los Procedimientos Validados de Cambio', d:'Los cambios farmacéuticos están limitados por requisitos de validación — pero la secuencia y preparación pueden optimizarse sin cambiar el procedimiento validado. Mapea todos los pasos del cambio, identifica cuáles pueden hacerse externamente (antes de que la línea pare), y pre-posiciona todos los materiales y documentos. En farma LatAm, el 30–40% del tiempo de cambio es típicamente trabajo externo hecho después de que la línea para.', i:'+6–12 puntos OEE' },
+      },
+      perf_low: {
+        en: { t:'Review Speed Constraints & Manual Control Points', d:'Performance losses in pharma often come from overly conservative speed settings set during validation and never revisited. Conduct a formal speed trial within the validated range. Also identify manual in-process control points that create micro-stops and evaluate automation feasibility for the highest-frequency controls.', i:'+4–8 OEE points' },
+        es: { t:'Revisa las Restricciones de Velocidad y Puntos de Control Manual', d:'Las pérdidas de rendimiento en farma frecuentemente provienen de configuraciones de velocidad demasiado conservadoras establecidas durante la validación y nunca revisadas. Realiza una prueba formal de velocidad dentro del rango validado. También identifica puntos de control en proceso manual que crean microparos y evalúa la factibilidad de automatización para los controles de mayor frecuencia.', i:'+4–8 puntos OEE' },
+      },
+      qual_low: {
+        en: { t:'Reduce Documentation Errors & In-Process Rejects', d:'In pharma, quality losses have two components: physical defects (fill weight, seal integrity) and documentation errors that invalidate batches. Implement electronic batch records to eliminate transcription errors. For physical defects, apply Process Analytical Technology (PAT) for real-time in-process monitoring at critical quality attributes.', i:'+3–7 OEE points' },
+        es: { t:'Reduce Errores de Documentación y Rechazos en Proceso', d:'En farma, las pérdidas de calidad tienen dos componentes: defectos físicos (peso de llenado, integridad de sello) y errores de documentación que invalidan lotes. Implementa registros de lote electrónicos para eliminar errores de transcripción. Para defectos físicos, aplica Tecnología de Análisis de Proceso (PAT) para monitoreo en tiempo real de atributos críticos de calidad.', i:'+3–7 puntos OEE' },
+      },
+    }
+  },
+  textile: {
+    en: 'Textile', es: 'Textil',
+    bench:   { global: [55,68], latam: [50,62] },
+    wc:      { global: 78,      latam: 72 },
+    adjust:  6,
+    drivers: {
+      avail: { en: 'Thread breaks, loom/machine setup, yarn lot changeovers', es: 'Roturas de hilo, setup de telar/máquina, cambios de lote de hilo' },
+      perf:  { en: 'Reduced loom speed for delicate fabrics, operator-dependent efficiency variation', es: 'Velocidad reducida de telar para telas delicadas, variación de eficiencia dependiente del operario' },
+      qual:  { en: 'Weaving defects, color variation between lots, shrinkage non-conformance', es: 'Defectos de tejido, variación de color entre lotes, no conformidad de encogimiento' },
+    },
+    recs: {
+      avail_low: {
+        en: { t:'Reduce Thread Breaks & Standardize Loom Setup', d:'Thread breaks are the #1 availability loss in textile. Analyze breaks by yarn supplier, lot, and machine to identify the root cause pattern. In LatAm textile plants, yarn quality variation between domestic suppliers is a structural driver — implement incoming yarn qualification. Standardize loom setup with visual work instructions to reduce setup time 30–50%.', i:'+7–12 OEE points' },
+        es: { t:'Reduce Roturas de Hilo y Estandariza el Setup de Telar', d:'Las roturas de hilo son la pérdida de disponibilidad #1 en textil. Analiza roturas por proveedor de hilo, lote y máquina para identificar el patrón de causa raíz. En plantas textiles LatAm, la variación de calidad del hilo entre proveedores domésticos es un driver estructural — implementa calificación de hilo entrante. Estandariza el setup de telar con instrucciones de trabajo visuales para reducir el tiempo de setup 30–50%.', i:'+7–12 puntos OEE' },
+      },
+      perf_low: {
+        en: { t:'Reduce Operator-Dependent Efficiency Variation', d:'In textile, performance variation between operators on the same machines can reach 15–25%. Identify your top performers and document their work methods. Implement structured on-the-job training based on best-practice methods. Track individual OEE by operator to create accountability and coaching opportunities.', i:'+4–9 OEE points' },
+        es: { t:'Reduce la Variación de Eficiencia Dependiente del Operario', d:'En textil, la variación de rendimiento entre operarios en las mismas máquinas puede llegar al 15–25%. Identifica a tus mejores operarios y documenta sus métodos de trabajo. Implementa entrenamiento estructurado en el puesto basado en métodos de mejores prácticas. Rastrea el OEE individual por operario para crear accountability y oportunidades de coaching.', i:'+4–9 puntos OEE' },
+      },
+      qual_low: {
+        en: { t:'Control Lot-to-Lot Color & Dimensional Consistency', d:'Color variation between yarn lots and dimensional non-conformance (shrinkage) are the primary quality losses in textile. Implement incoming lot testing with colorimetric measurement before production. Establish shrinkage control samples at the start of each new lot. In LatAm textile, 40–60% of quality rejects are lot-change related and preventable.', i:'+3–7 OEE points' },
+        es: { t:'Controla la Consistencia de Color y Dimensional entre Lotes', d:'La variación de color entre lotes de hilo y la no conformidad dimensional (encogimiento) son las principales pérdidas de calidad en textil. Implementa pruebas de lote entrante con medición colorimétrica antes de producción. Establece muestras de control de encogimiento al inicio de cada nuevo lote. En textil LatAm, el 40–60% de los rechazos de calidad están relacionados con cambios de lote y son prevenibles.', i:'+3–7 puntos OEE' },
+      },
+    }
+  },
+  chem: {
+    en: 'Chemicals', es: 'Química',
+    bench:   { global: [60,72], latam: [54,65] },
+    wc:      { global: 82,      latam: 76 },
+    adjust:  7,
+    drivers: {
+      avail: { en: 'Reactor cleaning, product changeover/purging, safety-related shutdowns', es: 'Limpieza de reactor, cambio/purga de producto, paros por seguridad' },
+      perf:  { en: 'Batch cycle time variation, reaction yield variability, agitator/pump failures', es: 'Variación de tiempo de ciclo de lote, variabilidad de rendimiento de reacción, fallas de agitador/bomba' },
+      qual:  { en: 'Out-of-spec batches, concentration deviation, contamination between products', es: 'Lotes fuera de especificación, desviación de concentración, contaminación entre productos' },
+    },
+    recs: {
+      avail_low: {
+        en: { t:'Optimize Reactor Cleaning & Product Changeover', d:'Chemical plants lose 20–40% availability to reactor cleaning and product purging — often with poorly defined endpoints. Implement analytical cleaning verification (instead of time-based cleaning) to reduce cleaning time by 20–35%. Map all changeover steps and identify which can be parallelized or done during equipment cooling.', i:'+7–13 OEE points' },
+        es: { t:'Optimiza la Limpieza de Reactor y el Cambio de Producto', d:'Las plantas químicas pierden 20–40% de disponibilidad en limpieza de reactor y purga de producto — frecuentemente con criterios de fin poco definidos. Implementa verificación analítica de limpieza (en lugar de limpieza basada en tiempo) para reducir el tiempo de limpieza 20–35%. Mapea todos los pasos de cambio e identifica cuáles pueden paralelizarse o hacerse durante el enfriamiento del equipo.', i:'+7–13 puntos OEE' },
+      },
+      perf_low: {
+        en: { t:'Reduce Batch Cycle Time Variation',d:'In chemical manufacturing, batch cycle time variation >15% signals uncontrolled process variables. Implement multivariate process monitoring on the top 5 variables correlated with cycle time. In LatAm chemical plants, raw material quality variation from domestic suppliers is a frequent hidden driver of cycle time drift.', i:'+4–9 OEE points' },
+        es: { t:'Reduce la Variación del Tiempo de Ciclo de Lote', d:'En manufactura química, una variación del tiempo de ciclo de lote >15% señala variables de proceso no controladas. Implementa monitoreo de proceso multivariado sobre las 5 variables más correlacionadas con el tiempo de ciclo. En plantas químicas LatAm, la variación de calidad de materia prima de proveedores domésticos es un driver oculto frecuente de la deriva del tiempo de ciclo.', i:'+4–9 puntos OEE' },
+      },
+      qual_low: {
+        en: { t:'Prevent Cross-Contamination & Out-of-Spec Batches', d:'Out-of-spec batches in chemical plants have high rework/disposal cost. Implement statistical process control on the 3 parameters most correlated with batch rejection. For multi-product facilities, create a product compatibility matrix and define minimum cleaning requirements between each product pair to prevent contamination.', i:'+3–7 OEE points' },
+        es: { t:'Previene la Contaminación Cruzada y los Lotes Fuera de Especificación', d:'Los lotes fuera de especificación en plantas químicas tienen alto costo de retrabajo/disposición. Implementa control estadístico de proceso sobre los 3 parámetros más correlacionados con el rechazo de lote. Para instalaciones multiproducto, crea una matriz de compatibilidad de productos y define los requisitos mínimos de limpieza entre cada par de productos para prevenir contaminación.', i:'+3–7 puntos OEE' },
+      },
+    }
+  },
+  general: {
+    en: 'General Mfg.', es: 'Manufactura Gral.',
+    bench:   { global: [60,75], latam: [54,68] },
+    wc:      { global: 85,      latam: 78 },
+    adjust:  7,
+    drivers: {
+      avail: { en: 'Unplanned equipment failures, material shortages, operator absenteeism', es: 'Fallas de equipo no planeadas, desabasto de material, ausentismo de operarios' },
+      perf:  { en: 'Micro-stops, speed losses, informal work methods variation', es: 'Microparos, pérdidas de velocidad, variación de métodos de trabajo informales' },
+      qual:  { en: 'Rework, scrap from non-standard materials, inspection bottlenecks', es: 'Retrabajo, scrap por materiales no estándar, cuellos de botella de inspección' },
+    },
+    recs: {
+      avail_low: {
+        en: { t:'Address the Top 3 Unplanned Downtime Sources', d:'In general manufacturing, 80% of unplanned downtime typically comes from 3–5 recurring failure modes. Run a Pareto analysis on your downtime log for the last 90 days and launch focused TPM actions on the top 3. In LatAm plants without formal downtime tracking, start by implementing a simple paper-based downtime log before optimizing.', i:'+8–15 OEE points' },
+        es: { t:'Atiende las 3 Principales Fuentes de Paro No Planeado', d:'En manufactura general, el 80% del tiempo de paro no planeado típicamente proviene de 3–5 modos de falla recurrentes. Ejecuta un análisis Pareto en tu registro de paros de los últimos 90 días y lanza acciones TPM enfocadas en los 3 principales. En plantas LatAm sin seguimiento formal de paros, empieza implementando un registro simple de paros en papel antes de optimizar.', i:'+8–15 puntos OEE' },
+      },
+      perf_low: {
+        en: { t:'Detect & Eliminate Micro-Stops', d:'Micro-stops (under 5 min each) are invisible in manual OEE tracking but can represent 15–25% of production time. Implement a simple tally system for operators to record every stop reason. In LatAm plants, the gap between official OEE (manual) and real OEE (measured) is typically 8–12 percentage points — micro-stops are the main explanation.', i:'+5–12 OEE points' },
+        es: { t:'Detecta y Elimina los Microparos', d:'Los microparos (menos de 5 min cada uno) son invisibles en el seguimiento manual de OEE pero pueden representar 15–25% del tiempo de producción. Implementa un sistema de marcas simple para que los operarios registren cada motivo de paro. En plantas LatAm, la brecha entre el OEE oficial (manual) y el real (medido) es típicamente de 8–12 puntos porcentuales — los microparos son la principal explicación.', i:'+5–12 puntos OEE' },
+      },
+      qual_low: {
+        en: { t:'Reduce Rework Through Process Standardization', d:'In general manufacturing, rework is often a symptom of inconsistent work methods — not defective equipment. Standardize the top 3 operations with the highest rework rate using visual work instructions and implement first-piece inspection. A DMAIC project on the primary defect category typically reduces rework rate by 40–60% in 90 days.', i:'+3–8 OEE points' },
+        es: { t:'Reduce el Retrabajo a Través de la Estandarización de Procesos', d:'En manufactura general, el retrabajo frecuentemente es síntoma de métodos de trabajo inconsistentes — no de equipos defectuosos. Estandariza las 3 operaciones con mayor tasa de retrabajo usando instrucciones de trabajo visuales e implementa inspección de primera pieza. Un proyecto DMAIC sobre la categoría principal de defecto típicamente reduce la tasa de retrabajo 40–60% en 90 días.', i:'+3–8 puntos OEE' },
+      },
+    }
+  }
+};
+console.log('Industries loaded:', Object.keys(INDUSTRIES).length);
+
+
+let lang = 'en';
+let industry = 'food';
+
+const T = {
+  en:{
+    tag:'INDUSTRIAL PERFORMANCE TOOL',h1sub:'Calculator',sublabel:'OVERALL EQUIPMENT EFFECTIVENESS · OPSMETRICS',
+    industry:'SELECT INDUSTRY — affects financial calculations and recommendations',
+    avail:'AVAILABILITY',perf:'PERFORMANCE',qual:'QUALITY',plant:'PLANT CONTEXT',
+    planned:'PLANNED PRODUCTION TIME',downtime:'UNPLANNED DOWNTIME',ideal:'IDEAL CYCLE TIME',total:'TOTAL UNITS PRODUCED',
+    defects:'DEFECTIVE / REWORK UNITS',unitval:'UNIT VALUE (USD)',ophours:'OPERATING DAYS / YEAR',
+    shifts:'SHIFTS / DAY',workers:'OPERATORS / SHIFT',laborrate:'AVG LABOR COST (USD/hr)',
+    hint_planned:'e.g. 480 = 8h shift',hint_downtime:'Breakdowns, changeovers, material shortage',
+    hint_ideal:'Units per minute at full speed',hint_labor:'Colombia avg industrial ~USD 3.5–6/hr',
+    oee_result:'OEE SCORE',avail_c:'AVAILABILITY',perf_c:'PERFORMANCE',qual_c:'QUALITY',oee_c:'OEE',
+    good_units:'GOOD UNITS / SHIFT',rev_shift:'REVENUE / SHIFT',lost_rev:'LOST REVENUE / YEAR',potential:'POTENTIAL GAIN / YEAR',
+    sub_rev:'at current OEE',sub_lost:'vs. LatAm benchmark',sub_pot:'reaching LatAm world class',
+    bench_title:'INDUSTRY BENCHMARKS — GLOBAL vs LATAM',bench_wc:'World Class',bench_latam:'LatAm WC',
+    bench_note:'LatAm benchmarks adjusted -5 to -8pp from global references based on regional automation level, maintenance maturity, and operational variability. Financial calculations use LatAm benchmark.',
+    recs_title:'PRIORITY RECOMMENDATIONS',
+    status:['CRITICAL — IMMEDIATE ACTION','BELOW LATAM BENCHMARK','APPROACHING BENCHMARK','AT BENCHMARK','LATAM WORLD CLASS'],
+    unit_sh:'shifts',unit_op:'op',
+    cta_h3:'Want a full operational diagnosis?',
+    cta_p:'This calculator gives you the baseline. A structured diagnosis identifies root causes and builds the 90-day roadmap to recover your lost revenue.',
+    cta_f1:'FREE ACCESS',cta_f2:'NO CREDIT CARD',cta_f3:'INSTANT DELIVERY',
+    cta_privacy:'No spam. No sharing. Unsubscribe anytime.',
+    bench_ctx:(ind,latam,wc,gap,oee)=>`Benchmark selected: <strong>${ind}</strong> — LatAm typical: <strong>${latam[0]}–${latam[1]}%</strong> · LatAm world class: <strong>${wc}%</strong>${oee>0?` · Your position: <strong>${oee>=wc?'At or above world class':oee>=latam[0]?'Within benchmark range':`${Math.max(latam[0]-oee,0)}pp below minimum benchmark`}</strong>`:''}. Financial impact calculated against LatAm benchmark.`,
+    rec_ok_avail:{t:'Sustain Availability',d:'Availability is solid. Shift focus to predictive maintenance and operator skill development to prevent regression.',i:'Maintain current gains'},
+    rec_ok_perf:{t:'Optimize Speed Performance',d:'Performance near benchmark. Fine-tune cycle times and reduce minor stoppages through time-study analysis.',i:'+2–5 OEE points available'},
+    rec_ok_qual:{t:'Target Zero Defects',d:'Quality rate is strong. Implement poka-yoke mechanisms and process capability studies (Cpk) to push toward zero defects.',i:'Protect margin gains'},
+  },
+  es:{
+    tag:'HERRAMIENTA DE DESEMPEÑO INDUSTRIAL',h1sub:'Calculadora',sublabel:'EFICIENCIA GLOBAL DEL EQUIPO · OPSMETRICS',
+    industry:'SELECCIONA INDUSTRIA — afecta cálculos financieros y recomendaciones',
+    avail:'DISPONIBILIDAD',perf:'RENDIMIENTO',qual:'CALIDAD',plant:'CONTEXTO PLANTA',
+    planned:'TIEMPO PLANEADO DE PRODUCCIÓN',downtime:'PAROS NO PLANEADOS',ideal:'TIEMPO DE CICLO IDEAL',total:'UNIDADES PRODUCIDAS TOTALES',
+    defects:'UNIDADES DEFECTUOSAS / RETRABAJO',unitval:'VALOR POR UNIDAD (USD)',ophours:'DÍAS OPERATIVOS / AÑO',
+    shifts:'TURNOS / DÍA',workers:'OPERARIOS / TURNO',laborrate:'COSTO LABORAL PROM. (USD/hr)',
+    hint_planned:'Ej. 480 = turno de 8h',hint_downtime:'Averías, cambios de referencia, falta de material',
+    hint_ideal:'Unidades por minuto a velocidad máxima',hint_labor:'Promedio industrial Colombia ~USD 3.5–6/hr',
+    oee_result:'RESULTADO OEE',avail_c:'DISPONIBILIDAD',perf_c:'RENDIMIENTO',qual_c:'CALIDAD',oee_c:'OEE',
+    good_units:'UNIDADES BUENAS / TURNO',rev_shift:'INGRESOS / TURNO',lost_rev:'INGRESOS PERDIDOS / AÑO',potential:'POTENCIAL DE GANANCIA / AÑO',
+    sub_rev:'con OEE actual',sub_lost:'vs. benchmark LatAm',sub_pot:'alcanzando clase mundial LatAm',
+    bench_title:'BENCHMARKS POR INDUSTRIA — GLOBAL vs LATAM',bench_wc:'Clase Mundial',bench_latam:'CM LatAm',
+    bench_note:'Benchmarks LatAm ajustados -5 a -8pp de referencias globales según nivel de automatización, madurez de mantenimiento y variabilidad operacional regional. Los cálculos financieros usan el benchmark LatAm.',
+    recs_title:'RECOMENDACIONES PRIORITARIAS',
+    status:['CRÍTICO — ACCIÓN INMEDIATA','BAJO BENCHMARK LATAM','ACERCÁNDOSE AL BENCHMARK','EN BENCHMARK','CLASE MUNDIAL LATAM'],
+    unit_sh:'turnos',unit_op:'op',
+    cta_h3:'¿Quieres un diagnóstico operacional completo?',
+    cta_p:'Esta calculadora te da la línea base. Un diagnóstico estructurado identifica las causas raíz y construye la hoja de ruta a 90 días para recuperar tus ingresos perdidos.',
+    cta_f1:'ACCESO GRATUITO',cta_f2:'SIN TARJETA DE CRÉDITO',cta_f3:'ENTREGA INMEDIATA',
+    cta_privacy:'Sin spam. Sin reenvíos. Cancela cuando quieras.',
+    bench_ctx:(ind,latam,wc,gap,oee)=>`Industria seleccionada: <strong>${ind}</strong> — Típico LatAm: <strong>${latam[0]}–${latam[1]}%</strong> · Clase mundial LatAm: <strong>${wc}%</strong>${oee>0?` · Tu posición: <strong>${oee>=wc?'En o sobre clase mundial':oee>=latam[0]?'Dentro del rango benchmark':`${Math.max(latam[0]-oee,0)}pp bajo el mínimo benchmark`}</strong>`:''}. El impacto financiero se calcula contra el benchmark LatAm.`,
+    rec_ok_avail:{t:'Sostén la Disponibilidad',d:'Disponibilidad sólida. Enfócate en mantenimiento predictivo y desarrollo de habilidades del operario para evitar regresión.',i:'Mantén las ganancias actuales'},
+    rec_ok_perf:{t:'Optimiza el Rendimiento de Velocidad',d:'Rendimiento cerca del benchmark. Ajusta tiempos de ciclo y reduce microparos mediante estudios de tiempo.',i:'+2–5 puntos OEE disponibles'},
+    rec_ok_qual:{t:'Apunta a Cero Defectos',d:'Tasa de calidad fuerte. Implementa poka-yoke y estudios de capacidad de proceso (Cpk) para empujar hacia cero defectos.',i:'Protege las ganancias de margen'},
+  }
+};
+
+function setLang(l){lang=l;document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.textContent===l.toUpperCase()));renderAll();calc();}
+
+function renderAll(){
+  const t=T[lang];
+  const ids={'tag-tool':t.tag,'h1-sub':t.h1sub,'sub-label':t.sublabel,'lbl-industry':t.industry,
+    'lbl-availability':t.avail,'lbl-performance':t.perf,'lbl-quality':t.qual,'lbl-plant':t.plant,
+    'lbl-planned':t.planned,'lbl-downtime':t.downtime,'lbl-ideal':t.ideal,'lbl-total':t.total,
+    'lbl-defects':t.defects,'lbl-unitval':t.unitval,'lbl-ophours':t.ophours,'lbl-shifts':t.shifts,
+    'lbl-workers':t.workers,'lbl-laborrate':t.laborrate,'hint-planned':t.hint_planned,
+    'hint-downtime':t.hint_downtime,'hint-ideal':t.hint_ideal,'hint-labor':t.hint_labor,
+    'lbl-oee-result':t.oee_result,'lbl-avail':t.avail_c,'lbl-perf':t.perf_c,'lbl-qual':t.qual_c,
+    'lbl-oee-comp':t.oee_c,'lbl-good-units':t.good_units,'lbl-rev-shift':t.rev_shift,
+    'lbl-lost-rev':t.lost_rev,'lbl-potential':t.potential,'sub-rev-shift':t.sub_rev,
+    'sub-lost-rev':t.sub_lost,'sub-potential':t.sub_pot,'lbl-bench-title':t.bench_title,
+    'bench-note':t.bench_note,'lbl-recs-title':t.recs_title,'unit-sh':t.unit_sh,'unit-op':t.unit_op,
+    'cta-h3':t.cta_h3,'cta-p':t.cta_p,'cta-f1':t.cta_f1,'cta-f2':t.cta_f2,'cta-f3':t.cta_f3,
+    'cta-privacy':t.cta_privacy};
+  Object.entries(ids).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.textContent=v;});
+  renderIndustries();renderBenchmarks();
+}
+
+function renderIndustries(){
+  const g=document.getElementById('industry-grid');g.innerHTML='';
+  Object.entries(INDUSTRIES).forEach(([k,v])=>{
+    const c=document.createElement('button');c.className='industry-chip'+(k===industry?' active':'');
+    c.textContent=v[lang];c.onclick=()=>{industry=k;renderIndustries();renderBenchmarks();calc();};g.appendChild(c);
+  });
+}
+
+function renderBenchmarks(){
+  const g=document.getElementById('bench-grid');g.innerHTML='';
+  const t=T[lang];
+  Object.entries(INDUSTRIES).forEach(([k,v])=>{
+    const d=document.createElement('div');d.className='bench-item'+(k===industry?' current-industry':'');
+    d.innerHTML=`<div class="bench-industry">${v[lang]}</div>
+      <div class="bench-range">${v.bench.global[0]}–${v.bench.global[1]}<span>% global</span></div>
+      <div class="bench-latam">LatAm: ${v.bench.latam[0]}–${v.bench.latam[1]}% · CM: ${v.wc.latam}%</div>`;
+    g.appendChild(d);
+  });
+}
+
+function updateBenchContext(oeeNum){
+  const t=T[lang];const ind=INDUSTRIES[industry];
+  const ctx=document.getElementById('bench-context');
+  ctx.innerHTML=t.bench_ctx(ind[lang],ind.bench.latam,ind.wc.latam,ind.adjust,oeeNum);
+}
+
+function fmt(n){if(n>=1000000)return'$'+(n/1000000).toFixed(1)+'M';if(n>=1000)return'$'+(n/1000).toFixed(0)+'K';return'$'+n.toFixed(0);}
+function colorClass(v,low,mid){return v<low?'color-bad':v<mid?'color-mid':'color-good';}
+function barColor(v,low,mid){return v<low?'bg-bad':v<mid?'bg-mid':'bg-good';}
+function updateUnitVal(){document.getElementById('unitval-display').textContent='$'+document.getElementById('unitval').value;}
+function updateDays(){document.getElementById('days-display').textContent=document.getElementById('opdays').value;}
+
+function calc(){
+  const planned=parseFloat(document.getElementById('planned').value)||480;
+  const downtime=parseFloat(document.getElementById('downtime').value)||0;
+  const idealcycle=parseFloat(document.getElementById('idealcycle').value)||1;
+  const total=parseFloat(document.getElementById('total').value)||0;
+  const defects=parseFloat(document.getElementById('defects').value)||0;
+  const unitval=parseFloat(document.getElementById('unitval').value)||50;
+  const opdays=parseFloat(document.getElementById('opdays').value)||250;
+  const shifts=parseFloat(document.getElementById('shifts').value)||2;
+
+  const runTime=Math.max(planned-downtime,0);
+  const A=planned>0?runTime/planned:0;
+  const maxUnits=runTime*idealcycle;
+  const P=maxUnits>0?Math.min(total/maxUnits,1):0;
+  const goodUnits=Math.max(total-defects,0);
+  const Q=total>0?goodUnits/total:0;
+  const OEE=A*P*Q;
+
+  const ind=INDUSTRIES[industry];
+  const benchMin=ind.bench.latam[0]/100;
+  const benchMax=ind.bench.latam[1]/100;
+  const wcOEE=ind.wc.latam/100;
+
+  const revShift=goodUnits*unitval;
+  const benchGood=benchMin*planned*idealcycle;
+  const lostRev=Math.max(benchGood-goodUnits,0)*unitval*opdays*shifts;
+  const potentialGain=Math.max((wcOEE-OEE)*planned*idealcycle*unitval*opdays*shifts,0);
+
+  const oeeNum=Math.round(OEE*100);
+  const oeeEl=document.getElementById('oee-val');
+  oeeEl.innerHTML=oeeNum+'<span class="oee-pct">%</span>';
+
+  const t=T[lang];
+  let statusIdx,oeeColor;
+  if(OEE<0.40){statusIdx=0;oeeColor='color-bad';}
+  else if(OEE<benchMin){statusIdx=1;oeeColor='color-bad';}
+  else if(OEE<benchMax){statusIdx=2;oeeColor='color-mid';}
+  else if(OEE<wcOEE){statusIdx=3;oeeColor='color-good';}
+  else{statusIdx=4;oeeColor='color-good';}
+
+  oeeEl.className='oee-value '+oeeColor;
+  const statusEl=document.getElementById('oee-status');
+  statusEl.textContent=t.status[statusIdx];
+  statusEl.style.background=oeeColor==='color-bad'?'rgba(255,77,77,.15)':oeeColor==='color-mid'?'rgba(245,166,35,.15)':'rgba(0,229,160,.15)';
+  statusEl.style.color=oeeColor==='color-bad'?'var(--bad)':oeeColor==='color-mid'?'var(--mid)':'var(--good)';
+
+  // Position text
+  const posEl=document.getElementById('oee-position');
+  const gap=Math.max(ind.bench.latam[0]-oeeNum,0);
+  const posTexts={
+    en:{below:`${gap}pp below LatAm minimum benchmark`,wc:`At LatAm world class (${ind.wc.latam}%)`,within:'Within LatAm benchmark range'},
+    es:{below:`${gap}pp bajo el benchmark mínimo LatAm`,wc:`En clase mundial LatAm (${ind.wc.latam}%)`,within:'Dentro del rango benchmark LatAm'}
   };
+  const pt=posTexts[lang];
+  posEl.textContent=gap>0?pt.below:(oeeNum>=ind.wc.latam?pt.wc:pt.within);
 
-  function setLang(l) {
-    lang = l;
-    document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === l.toUpperCase()));
-    renderAll();
-    calc();
-  }
+  [{bar:'bar-avail',pct:'pct-avail',val:A,low:.70,mid:.80},
+   {bar:'bar-perf', pct:'pct-perf', val:P,low:.65,mid:.80},
+   {bar:'bar-qual', pct:'pct-qual', val:Q,low:.90,mid:.96}
+  ].forEach(c=>{
+    const pct=Math.round(c.val*100);
+    document.getElementById(c.bar).style.width=pct+'%';
+    document.getElementById(c.bar).className='bar-fill '+barColor(c.val,c.low,c.mid);
+    document.getElementById(c.pct).textContent=pct+'%';
+    document.getElementById(c.pct).className='comp-pct '+colorClass(c.val,c.low,c.mid);
+  });
+  document.getElementById('bar-oee').style.width=oeeNum+'%';
+  document.getElementById('pct-oee').textContent=oeeNum+'%';
+  document.getElementById('fin-goodunits').textContent=Math.round(goodUnits).toLocaleString();
+  document.getElementById('fin-revshift').textContent=fmt(revShift);
+  document.getElementById('fin-lostrev').textContent=fmt(lostRev);
+  document.getElementById('fin-potential').textContent=fmt(potentialGain);
 
-  function renderAll() {
-    const t = T[lang];
-    document.getElementById('tag-tool').textContent = t.tag;
-    document.getElementById('h1-sub').textContent = t.h1sub;
-    document.getElementById('sub-label').textContent = t.sublabel;
-    document.getElementById('lbl-industry').textContent = t.industry;
-    document.getElementById('lbl-availability').textContent = t.avail;
-    document.getElementById('lbl-performance').textContent = t.perf;
-    document.getElementById('lbl-quality').textContent = t.qual;
-    document.getElementById('lbl-plant').textContent = t.plant;
-    document.getElementById('lbl-planned').textContent = t.planned;
-    document.getElementById('lbl-downtime').textContent = t.downtime;
-    document.getElementById('lbl-ideal').textContent = t.ideal;
-    document.getElementById('lbl-total').textContent = t.total;
-    document.getElementById('lbl-defects').textContent = t.defects;
-    document.getElementById('lbl-unitval').textContent = t.unitval;
-    document.getElementById('lbl-ophours').textContent = t.ophours;
-    document.getElementById('lbl-shifts').textContent = t.shifts;
-    document.getElementById('lbl-workers').textContent = t.workers;
-    document.getElementById('lbl-laborrate').textContent = t.laborrate;
-    document.getElementById('hint-planned').textContent = t.hint_planned;
-    document.getElementById('hint-downtime').textContent = t.hint_downtime;
-    document.getElementById('hint-ideal').textContent = t.hint_ideal;
-    document.getElementById('hint-labor').textContent = t.hint_labor;
-    document.getElementById('lbl-oee-result').textContent = t.oee_result;
-    document.getElementById('lbl-avail').textContent = t.avail_c;
-    document.getElementById('lbl-perf').textContent = t.perf_c;
-    document.getElementById('lbl-qual').textContent = t.qual_c;
-    document.getElementById('lbl-oee-comp').textContent = t.oee_c;
-    document.getElementById('lbl-good-units').textContent = t.good_units;
-    document.getElementById('lbl-rev-shift').textContent = t.rev_shift;
-    document.getElementById('lbl-lost-rev').textContent = t.lost_rev;
-    document.getElementById('lbl-potential').textContent = t.potential;
-    document.getElementById('sub-rev-shift').textContent = t.sub_rev;
-    document.getElementById('sub-lost-rev').textContent = t.sub_lost;
-    document.getElementById('sub-potential').textContent = t.sub_pot;
-    document.getElementById('lbl-bench-title').textContent = t.bench_title;
-    document.getElementById('lbl-recs-title').textContent = t.recs_title;
-    document.getElementById('unit-min').textContent = t.unit_min;
-    document.getElementById('unit-upun').textContent = t.unit_upun;
-    document.getElementById('unit-u').textContent = t.unit_u;
-    document.getElementById('unit-sh').textContent = t.unit_sh;
-    document.getElementById('unit-op').textContent = t.unit_op;
-    document.getElementById('cta-h3').textContent = t.cta_h3;
-    document.getElementById('cta-p').textContent = t.cta_p;
-    document.getElementById('cta-f1').textContent = t.cta_f1;
-    document.getElementById('cta-f2').textContent = t.cta_f2;
-    document.getElementById('cta-f3').textContent = t.cta_f3;
-    document.getElementById('cta-privacy').textContent = t.cta_privacy;
-    renderIndustries();
-    renderBenchmarks();
-  }
+  // Industry-specific recs
+  const indRecs=INDUSTRIES[industry].recs;
+  const list=[];
+  if(A<.75) list.push({...indRecs.avail_low[lang],color:'var(--bad)'});
+  else       list.push({...t.rec_ok_avail,color:'var(--good)'});
+  if(P<.80)  list.push({...indRecs.perf_low[lang],color:A<.75?'var(--mid)':'var(--bad)'});
+  else       list.push({...t.rec_ok_perf,color:'var(--good)'});
+  if(Q<.95)  list.push({...indRecs.qual_low[lang],color:'var(--mid)'});
+  else       list.push({...t.rec_ok_qual,color:'var(--good)'});
+  list.sort((a,b)=>(a.color==='var(--bad)'?-1:a.color==='var(--mid)'?0:1)-(b.color==='var(--bad)'?-1:b.color==='var(--mid)'?0:1));
 
-  function renderIndustries() {
-    const grid = document.getElementById('industry-grid');
-    grid.innerHTML = '';
-    Object.entries(industries).forEach(([key, val]) => {
-      const chip = document.createElement('button');
-      chip.className = 'industry-chip' + (key === industry ? ' active' : '');
-      chip.textContent = val[lang];
-      chip.onclick = () => { industry = key; renderIndustries(); renderBenchmarks(); calc(); };
-      grid.appendChild(chip);
-    });
-  }
+  document.getElementById('recs-list').innerHTML=list.map(r=>`
+    <div class="rec-item"><div class="rec-bar" style="background:${r.color}"></div>
+    <div><div class="rec-title">${r.t}</div><div class="rec-desc">${r.d}</div><div class="rec-impact">${r.i}</div></div></div>`).join('');
 
-  function renderBenchmarks() {
-    const grid = document.getElementById('bench-grid');
-    grid.innerHTML = '';
-    Object.entries(industries).forEach(([key, val]) => {
-      const item = document.createElement('div');
-      item.className = 'bench-item' + (key === industry ? ' current-industry' : '');
-      item.innerHTML = `
-        <div class="bench-industry">${val[lang]}</div>
-        <div class="bench-range">${val.bench[0]}–${val.bench[1]}<span>%</span></div>
-        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-muted);margin-top:4px">${T[lang].bench_wc}: ${val.wc}%</div>
-      `;
-      grid.appendChild(item);
-    });
-  }
+  updateBenchContext(oeeNum);
+}
 
-  function updateUnitVal() {
-    const v = document.getElementById('unitval').value;
-    document.getElementById('unitval-display').textContent = '$' + v;
-  }
-
-  function updateDays() {
-    const v = document.getElementById('opdays').value;
-    document.getElementById('days-display').textContent = v;
-  }
-
-  function fmt(n) {
-    if (n >= 1000000) return '$' + (n/1000000).toFixed(1) + 'M';
-    if (n >= 1000) return '$' + (n/1000).toFixed(0) + 'K';
-    return '$' + n.toFixed(0);
-  }
-
-  function colorClass(v, low, mid) {
-    if (v < low) return 'color-bad';
-    if (v < mid) return 'color-mid';
-    return 'color-good';
-  }
-
-  function barColor(v, low, mid) {
-    if (v < low) return 'bg-bad';
-    if (v < mid) return 'bg-mid';
-    return 'bg-good';
-  }
-
-  function calc() {
-    const planned   = parseFloat(document.getElementById('planned').value) || 480;
-    const downtime  = parseFloat(document.getElementById('downtime').value) || 0;
-    const idealcycle= parseFloat(document.getElementById('idealcycle').value) || 1;
-    const total     = parseFloat(document.getElementById('total').value) || 0;
-    const defects   = parseFloat(document.getElementById('defects').value) || 0;
-    const unitval   = parseFloat(document.getElementById('unitval').value) || 50;
-    const opdays    = parseFloat(document.getElementById('opdays').value) || 250;
-    const shifts    = parseFloat(document.getElementById('shifts').value) || 2;
-    const workers   = parseFloat(document.getElementById('workers').value) || 15;
-    const laborrate = parseFloat(document.getElementById('laborrate').value) || 4.5;
-
-    const runTime = Math.max(planned - downtime, 0);
-    const A = planned > 0 ? runTime / planned : 0;
-    const maxUnits = runTime * idealcycle;
-    const P = maxUnits > 0 ? Math.min(total / maxUnits, 1) : 0;
-    const goodUnits = Math.max(total - defects, 0);
-    const Q = total > 0 ? goodUnits / total : 0;
-    const OEE = A * P * Q;
-
-    const ind = industries[industry];
-    const benchOEE = ind.bench[1] / 100;
-    const wcOEE    = ind.wc / 100;
-
-    const revShift   = goodUnits * unitval;
-    const benchGood  = benchOEE * planned * idealcycle;
-    const lostUnitsPerShift = Math.max(benchGood - goodUnits, 0);
-    const lostRevPerYear    = lostUnitsPerShift * unitval * opdays * shifts;
-    const potentialGain     = Math.max((wcOEE - OEE) * planned * idealcycle * unitval * opdays * shifts, 0);
-
-    // Update OEE display
-    const oeeEl = document.getElementById('oee-val');
-    const oeeNum = Math.round(OEE * 100);
-    oeeEl.innerHTML = oeeNum + '<span class="oee-pct">%</span>';
-
-    const t = T[lang];
-    let statusIdx, oeeColor;
-    if (OEE < 0.40)      { statusIdx=0; oeeColor='color-bad'; }
-    else if (OEE < ind.bench[0]/100) { statusIdx=1; oeeColor='color-bad'; }
-    else if (OEE < ind.bench[1]/100) { statusIdx=2; oeeColor='color-mid'; }
-    else if (OEE < wcOEE){ statusIdx=3; oeeColor='color-good'; }
-    else                  { statusIdx=4; oeeColor='color-good'; }
-
-    oeeEl.className = 'oee-value ' + oeeColor;
-    const statusEl = document.getElementById('oee-status');
-    statusEl.textContent = t.status[statusIdx];
-    statusEl.style.background = oeeColor === 'color-bad' ? 'rgba(255,77,77,0.15)' : oeeColor === 'color-mid' ? 'rgba(245,166,35,0.15)' : 'rgba(0,229,160,0.15)';
-    statusEl.style.color = oeeColor === 'color-bad' ? 'var(--bad)' : oeeColor === 'color-mid' ? 'var(--mid)' : 'var(--good)';
-
-    // Bars
-    const comps = [
-      { bar: 'bar-avail', pct: 'pct-avail', val: A, low: 0.70, mid: 0.80 },
-      { bar: 'bar-perf',  pct: 'pct-perf',  val: P, low: 0.65, mid: 0.80 },
-      { bar: 'bar-qual',  pct: 'pct-qual',  val: Q, low: 0.90, mid: 0.96 },
-    ];
-    comps.forEach(c => {
-      const pct = Math.round(c.val * 100);
-      const barEl = document.getElementById(c.bar);
-      const pctEl = document.getElementById(c.pct);
-      barEl.style.width = pct + '%';
-      barEl.className = 'bar-fill ' + barColor(c.val, c.low, c.mid);
-      pctEl.textContent = pct + '%';
-      pctEl.className = 'comp-pct ' + colorClass(c.val, c.low, c.mid);
-    });
-
-    document.getElementById('bar-oee').style.width = oeeNum + '%';
-    document.getElementById('pct-oee').textContent = oeeNum + '%';
-
-    // Financials
-    document.getElementById('fin-goodunits').textContent = Math.round(goodUnits).toLocaleString();
-    document.getElementById('fin-revshift').textContent = fmt(revShift);
-    document.getElementById('fin-lostrev').textContent = fmt(lostRevPerYear);
-    document.getElementById('fin-potential').textContent = fmt(potentialGain);
-
-    // Recommendations
-    const recs = t.recs;
-    const list = [];
-    if (A < 0.75) list.push({ ...recs.avail_low, color: 'var(--bad)' });
-    else          list.push({ ...recs.avail_ok,  color: 'var(--good)' });
-    if (P < 0.80) list.push({ ...recs.perf_low,  color: A < 0.75 ? 'var(--mid)' : 'var(--bad)' });
-    else          list.push({ ...recs.perf_ok,   color: 'var(--good)' });
-    if (Q < 0.95) list.push({ ...recs.qual_low,  color: 'var(--mid)' });
-    else          list.push({ ...recs.qual_ok,   color: 'var(--good)' });
-
-    // Sort: worst first
-    list.sort((a,b) => (a.color === 'var(--bad)' ? -1 : a.color === 'var(--mid)' ? 0 : 1) - (b.color === 'var(--bad)' ? -1 : b.color === 'var(--mid)' ? 0 : 1));
-
-    const recsEl = document.getElementById('recs-list');
-    recsEl.innerHTML = list.map(r => `
-      <div class="rec-item">
-        <div class="rec-bar" style="background:${r.color}"></div>
-        <div>
-          <div class="rec-title">${r.t}</div>
-          <div class="rec-desc">${r.d}</div>
-          <div class="rec-impact">${r.i}</div>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  // Init
-  renderAll();
-  calc();
+renderAll();calc();
 </script>
 </body>
 </html>
